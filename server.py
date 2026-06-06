@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Serveur web pour le système multi-agents.
+Serveur web pour le système multi-agents (via Ollama — sans clé API).
 Usage: python3 server.py
 Puis ouvrir: http://localhost:8080
 """
@@ -13,16 +13,16 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from agents.orchestrator import Orchestrator, AGENTS  # noqa: E402
+from agents.base import ollama_available, list_local_models, OLLAMA_URL, OLLAMA_MODEL  # noqa
+from agents.orchestrator import Orchestrator, AGENTS  # noqa
 
 orchestrator = Orchestrator()
-
 HTML_FILE = os.path.join(os.path.dirname(__file__), "index.html")
 
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
-        pass  # silence les logs HTTP
+        pass
 
     def send_json(self, data: dict, status: int = 200):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
@@ -49,8 +49,16 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", str(len(content)))
             self.end_headers()
             self.wfile.write(content)
+
         elif self.path == "/status":
-            self.send_json({"status": "ok", "agents": list(AGENTS.keys())})
+            models = list_local_models()
+            self.send_json({
+                "ollama": ollama_available(),
+                "model": OLLAMA_MODEL,
+                "models": models,
+                "agents": list(AGENTS.keys()),
+            })
+
         else:
             self.send_json({"error": "Not found"}, 404)
 
@@ -60,22 +68,27 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/chat":
             message = body.get("message", "").strip()
-            agent_lock = body.get("agent")  # "planning" | "tasks" | "email" | None
+            agent_lock = body.get("agent")
+            model = body.get("model")
 
             if not message:
                 self.send_json({"error": "Message vide"}, 400)
                 return
 
-            if agent_lock and agent_lock in AGENTS:
-                orchestrator._active = agent_lock
-            else:
-                orchestrator._active = None
+            # Allow per-request model override
+            if model:
+                import agents.base as base_module
+                base_module.OLLAMA_MODEL = model
+                for a in orchestrator._agents.values():
+                    a.model = model
+
+            orchestrator._active = agent_lock if agent_lock in AGENTS else None
 
             try:
                 response, used_agent = orchestrator.chat(message)
                 self.send_json({"response": response, "agent": used_agent})
-            except EnvironmentError as e:
-                self.send_json({"error": str(e)}, 500)
+            except ConnectionError as e:
+                self.send_json({"error": str(e)}, 503)
             except Exception as e:
                 self.send_json({"error": f"Erreur: {e}"}, 500)
 
@@ -89,13 +102,21 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("⚠️  ANTHROPIC_API_KEY non défini.")
-        print("   Exécutez : export ANTHROPIC_API_KEY=sk-ant-...")
-        sys.exit(1)
-
     port = int(os.environ.get("PORT", 8080))
+
+    print(f"\n🤖 Système Multi-Agents — Ollama ({OLLAMA_URL})")
+    print(f"   Modèle : {OLLAMA_MODEL}")
+
+    if not ollama_available():
+        print("\n⚠️  Ollama n'est pas lancé.")
+        print("   1. Installez Ollama : https://ollama.com")
+        print(f"   2. Téléchargez un modèle : ollama pull {OLLAMA_MODEL}")
+        print("   3. Relancez ce serveur.")
+        print("\n   Le serveur démarre quand même — relancez Ollama puis rechargez la page.\n")
+    else:
+        models = list_local_models()
+        print(f"   Modèles disponibles : {', '.join(models) if models else 'aucun'}")
+
     server = HTTPServer(("0.0.0.0", port), Handler)
     print(f"\n🚀 Serveur démarré → http://localhost:{port}\n")
     try:

@@ -13,254 +13,160 @@
       --surface2: #22222c;
       --border: #2e2e3d;
       --text: #e8e8f0;
-      --text-muted: #7a7a9a;
+      --muted: #7a7a9a;
       --planning: #6c8ef5;
       --tasks: #52d68a;
       --email: #f5a623;
       --auto: #a78bfa;
-      --radius: 14px;
+      --danger: #f87171;
+      --ok: #4ade80;
+      --r: 14px;
       --font: 'Segoe UI', system-ui, sans-serif;
     }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); height: 100dvh; display: flex; flex-direction: column; }
 
     /* ── Header ── */
     header {
-      padding: 16px 24px;
+      padding: 12px 20px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       flex-shrink: 0;
+      flex-wrap: wrap;
     }
 
-    .logo {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
+    .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; white-space: nowrap; }
     .logo span { color: var(--auto); }
 
-    /* ── Agent tabs ── */
-    .tabs {
+    /* ── Status pill ── */
+    #statusPill {
       display: flex;
+      align-items: center;
       gap: 6px;
-      margin-left: auto;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
     }
+    #statusDot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+    #statusPill.ok  { border-color: #166534; color: var(--ok); }
+    #statusPill.ok  #statusDot { background: var(--ok); }
+    #statusPill.err { border-color: #7f1d1d; color: var(--danger); }
+    #statusPill.err #statusDot { background: var(--danger); }
+
+    /* ── Model select ── */
+    #modelSelect {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      max-width: 160px;
+    }
+    #modelSelect:focus { outline: none; border-color: var(--auto); }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 5px; margin-left: auto; }
 
     .tab {
-      padding: 7px 14px;
+      padding: 6px 13px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: transparent;
-      color: var(--text-muted);
+      color: var(--muted);
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      transition: all .15s;
+      white-space: nowrap;
     }
-
     .tab:hover { border-color: #444; color: var(--text); }
+    .tab.active[data-agent="auto"]     { background:#2d1f5e; border-color:var(--auto);     color:var(--auto); }
+    .tab.active[data-agent="planning"] { background:#1a2556; border-color:var(--planning); color:var(--planning); }
+    .tab.active[data-agent="tasks"]    { background:#0f3323; border-color:var(--tasks);    color:var(--tasks); }
+    .tab.active[data-agent="email"]    { background:#3d2800; border-color:var(--email);    color:var(--email); }
 
-    .tab.active[data-agent="auto"]     { background: #2d1f5e; border-color: var(--auto);     color: var(--auto); }
-    .tab.active[data-agent="planning"] { background: #1a2556; border-color: var(--planning); color: var(--planning); }
-    .tab.active[data-agent="tasks"]    { background: #0f3323; border-color: var(--tasks);    color: var(--tasks); }
-    .tab.active[data-agent="email"]    { background: #3d2800; border-color: var(--email);    color: var(--email); }
-
-    .reset-btn {
-      margin-left: 8px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
+    .reset-btn { padding: 6px 11px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; transition: all .15s; }
     .reset-btn:hover { border-color: #f55; color: #f77; }
 
-    /* ── Messages area ── */
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      scroll-behavior: smooth;
-    }
-
+    /* ── Messages ── */
+    #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
     #messages::-webkit-scrollbar { width: 4px; }
-    #messages::-webkit-scrollbar-track { background: transparent; }
     #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    /* ── Message bubbles ── */
-    .msg { display: flex; gap: 10px; max-width: 780px; animation: fadeUp 0.2s ease; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
+    .msg { display: flex; gap: 10px; max-width: 800px; animation: fadeUp .18s ease; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
     .msg.user { align-self: flex-end; flex-direction: row-reverse; }
 
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      flex-shrink: 0;
-      background: var(--surface2);
-    }
+    .avatar { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; background:var(--surface2); }
 
-    .bubble {
+    .bubble { padding: 11px 15px; border-radius: var(--r); line-height: 1.65; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+    .msg.user  .bubble { background:var(--surface2); border:1px solid var(--border); border-top-right-radius:4px; }
+    .msg.agent .bubble { background:var(--surface);  border:1px solid var(--border); border-top-left-radius:4px; }
+
+    .agent-tag { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+    .agent-tag[data-agent="planning"] { color:var(--planning); }
+    .agent-tag[data-agent="tasks"]    { color:var(--tasks); }
+    .agent-tag[data-agent="email"]    { color:var(--email); }
+    .agent-tag[data-agent="auto"]     { color:var(--auto); }
+
+    /* typing */
+    .typing { display:flex; align-items:center; gap:5px; padding:13px 15px; }
+    .dot { width:6px; height:6px; border-radius:50%; background:var(--muted); animation:bounce 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay:.2s; }
+    .dot:nth-child(3) { animation-delay:.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+    /* system msg */
+    .sys-msg { text-align:center; color:var(--muted); font-size:12px; padding:2px 0; }
+
+    /* ── Ollama banner ── */
+    #ollamaBanner {
+      display: none;
+      margin: 12px 20px 0;
       padding: 12px 16px;
-      border-radius: var(--radius);
-      line-height: 1.6;
-      font-size: 14.5px;
-      white-space: pre-wrap;
-      word-break: break-word;
+      border-radius: var(--r);
+      background: #1c1010;
+      border: 1px solid #7f1d1d;
+      color: #fca5a5;
+      font-size: 13px;
+      line-height: 1.7;
     }
-
-    .msg.user .bubble {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-top-right-radius: 4px;
-    }
-
-    .msg.agent .bubble {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-top-left-radius: 4px;
-    }
-
-    .msg .agent-tag {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 5px;
-    }
-
-    .agent-tag[data-agent="planning"] { color: var(--planning); }
-    .agent-tag[data-agent="tasks"]    { color: var(--tasks); }
-    .agent-tag[data-agent="email"]    { color: var(--email); }
-    .agent-tag[data-agent="auto"]     { color: var(--auto); }
-
-    /* ── Loading ── */
-    .typing { display: flex; align-items: center; gap: 5px; padding: 14px 16px; }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: bounce 1.2s infinite; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
-
-    /* ── Input area ── */
-    .input-area {
-      padding: 16px 24px 20px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .input-wrap {
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 10px 14px;
-      transition: border-color 0.15s;
-    }
-
-    .input-wrap:focus-within { border-color: var(--auto); }
-
-    textarea {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 14.5px;
-      line-height: 1.5;
-      resize: none;
-      max-height: 140px;
-      min-height: 24px;
-    }
-
-    textarea::placeholder { color: var(--text-muted); }
-
-    .send-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      border: none;
-      background: var(--auto);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: all 0.15s;
-    }
-
-    .send-btn:hover { background: #8b6ff8; }
-    .send-btn:disabled { background: var(--border); cursor: not-allowed; }
-
-    .send-btn svg { width: 16px; height: 16px; }
+    #ollamaBanner code { background:#2c1111; padding:1px 5px; border-radius:5px; font-size:12px; }
 
     /* ── Welcome ── */
-    .welcome {
-      margin: auto;
-      text-align: center;
-      color: var(--text-muted);
-      max-width: 480px;
-    }
+    .welcome { margin:auto; text-align:center; color:var(--muted); max-width:460px; }
+    .welcome h2 { font-size:21px; color:var(--text); margin-bottom:8px; }
+    .welcome p  { font-size:13.5px; line-height:1.7; }
+    .examples   { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin-top:18px; }
+    .example    { padding:7px 13px; border-radius:999px; border:1px solid var(--border); background:var(--surface2); font-size:13px; color:var(--muted); cursor:pointer; transition:all .15s; }
+    .example:hover { border-color:var(--auto); color:var(--text); }
 
-    .welcome h2 { font-size: 22px; color: var(--text); margin-bottom: 10px; }
-    .welcome p  { font-size: 14px; line-height: 1.7; }
+    /* ── Input ── */
+    .input-area { padding:14px 20px 18px; background:var(--surface); border-top:1px solid var(--border); flex-shrink:0; }
+    .input-wrap { display:flex; align-items:flex-end; gap:9px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r); padding:9px 13px; transition:border-color .15s; }
+    .input-wrap:focus-within { border-color:var(--auto); }
 
-    .examples {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-      margin-top: 20px;
-    }
+    textarea { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-family:var(--font); font-size:14px; line-height:1.5; resize:none; max-height:140px; min-height:22px; }
+    textarea::placeholder { color:var(--muted); }
 
-    .example {
-      padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--surface2);
-      font-size: 13px;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
+    .send-btn { width:34px; height:34px; border-radius:9px; border:none; background:var(--auto); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all .15s; }
+    .send-btn:hover { background:#8b6ff8; }
+    .send-btn:disabled { background:var(--border); cursor:not-allowed; }
+    .send-btn svg { width:15px; height:15px; }
 
-    .example:hover { border-color: var(--auto); color: var(--text); }
-
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
-      header { padding: 12px 16px; flex-wrap: wrap; }
-      .tabs  { gap: 4px; }
-      .tab   { padding: 6px 10px; font-size: 12px; }
-      #messages { padding: 16px; }
+    @media(max-width:600px) {
+      header { gap:8px; }
+      .tabs  { gap:3px; }
+      .tab   { padding:5px 9px; font-size:12px; }
+      #messages { padding:14px; }
     }
   </style>
 </head>
@@ -268,19 +174,37 @@
 
 <header>
   <div class="logo">🤖 <span>Agents</span> IA</div>
+
+  <div id="statusPill">
+    <div id="statusDot"></div>
+    <span id="statusText">Connexion…</span>
+  </div>
+
+  <select id="modelSelect" title="Modèle Ollama">
+    <option value="">Modèle…</option>
+  </select>
+
   <div class="tabs">
     <button class="tab active" data-agent="auto">⚡ Auto</button>
     <button class="tab" data-agent="planning">📅 Planning</button>
     <button class="tab" data-agent="tasks">✅ Tâches</button>
     <button class="tab" data-agent="email">✉️ Email</button>
   </div>
-  <button class="reset-btn" id="resetBtn" title="Réinitialiser la conversation">↺ Reset</button>
+
+  <button class="reset-btn" id="resetBtn">↺ Reset</button>
 </header>
+
+<div id="ollamaBanner">
+  ⚠️ <strong>Ollama n'est pas lancé.</strong><br>
+  1. Installez Ollama : <a href="https://ollama.com" target="_blank" style="color:#f87171">ollama.com</a><br>
+  2. Téléchargez un modèle : <code>ollama pull llama3.2</code><br>
+  3. Rechargez la page.
+</div>
 
 <div id="messages">
   <div class="welcome" id="welcome">
     <h2>Bonjour 👋</h2>
-    <p>Vos agents IA sont prêts. Parlez naturellement — le bon agent sera sélectionné automatiquement.</p>
+    <p>Vos agents IA tournent localement via Ollama — aucune clé API requise.</p>
     <div class="examples">
       <span class="example" onclick="send(this.textContent)">Ajoute une réunion lundi à 10h</span>
       <span class="example" onclick="send(this.textContent)">Mes tâches urgentes d'aujourd'hui</span>
@@ -293,7 +217,7 @@
 
 <div class="input-area">
   <div class="input-wrap">
-    <textarea id="input" placeholder="Écrivez votre message…" rows="1"></textarea>
+    <textarea id="input" placeholder="Écrivez votre message… (Entrée pour envoyer)" rows="1"></textarea>
     <button class="send-btn" id="sendBtn" onclick="sendMessage()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
@@ -306,9 +230,10 @@
   const messagesEl = document.getElementById('messages');
   const inputEl    = document.getElementById('input');
   const sendBtn    = document.getElementById('sendBtn');
-  const welcomeEl  = document.getElementById('welcome');
+  const modelSel   = document.getElementById('modelSelect');
   let activeAgent  = 'auto';
   let loading      = false;
+  let currentModel = '';
 
   const AGENT_META = {
     auto:     { label: 'Auto',     icon: '⚡' },
@@ -316,6 +241,44 @@
     tasks:    { label: 'Tâches',   icon: '✅' },
     email:    { label: 'Email',    icon: '✉️'  },
   };
+
+  // ── Status check ──────────────────────────────────────────
+  async function checkStatus() {
+    try {
+      const r    = await fetch('/status');
+      const data = await r.json();
+      const pill = document.getElementById('statusPill');
+      const txt  = document.getElementById('statusText');
+
+      if (data.ollama) {
+        pill.className = 'ok';
+        txt.textContent = data.model;
+        document.getElementById('ollamaBanner').style.display = 'none';
+
+        // Populate model selector
+        modelSel.innerHTML = '';
+        data.models.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = opt.textContent = m;
+          if (m === data.model || m.startsWith(data.model)) opt.selected = true;
+          modelSel.appendChild(opt);
+        });
+        currentModel = modelSel.value || data.model;
+      } else {
+        pill.className = 'err';
+        txt.textContent = 'Ollama hors ligne';
+        document.getElementById('ollamaBanner').style.display = 'block';
+      }
+    } catch {
+      document.getElementById('statusPill').className = 'err';
+      document.getElementById('statusText').textContent = 'Serveur hors ligne';
+    }
+  }
+
+  checkStatus();
+  setInterval(checkStatus, 15000);
+
+  modelSel.addEventListener('change', () => { currentModel = modelSel.value; });
 
   // ── Tabs ──────────────────────────────────────────────────
   document.querySelectorAll('.tab').forEach(btn => {
@@ -328,42 +291,34 @@
 
   // ── Reset ─────────────────────────────────────────────────
   document.getElementById('resetBtn').addEventListener('click', async () => {
-    const agent = activeAgent === 'auto' ? null : activeAgent;
     await fetch('/reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent }),
+      body: JSON.stringify({ agent: activeAgent === 'auto' ? null : activeAgent }),
     });
     document.querySelectorAll('.msg').forEach(m => m.remove());
-    welcomeEl.style.display = '';
-    addSystemMsg('Conversation réinitialisée.');
+    document.getElementById('welcome').style.display = '';
+    addSysMsg('Conversation réinitialisée.');
   });
 
-  // ── Textarea auto-resize ───────────────────────────────────
+  // ── Textarea ──────────────────────────────────────────────
   inputEl.addEventListener('input', () => {
     inputEl.style.height = 'auto';
     inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
   });
-
   inputEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 
   // ── Send ──────────────────────────────────────────────────
-  function send(text) {
-    inputEl.value = text;
-    sendMessage();
-  }
+  function send(text) { inputEl.value = text; sendMessage(); }
 
   async function sendMessage() {
     const text = inputEl.value.trim();
     if (!text || loading) return;
 
-    welcomeEl.style.display = 'none';
-    addMessage(text, 'user');
+    document.getElementById('welcome').style.display = 'none';
+    addMsg(text, 'user');
     inputEl.value = '';
     inputEl.style.height = 'auto';
 
@@ -371,33 +326,34 @@
     setLoading(true);
 
     try {
-      const res = await fetch('/chat', {
+      const res  = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
           agent: activeAgent === 'auto' ? null : activeAgent,
+          model: currentModel || undefined,
         }),
       });
       const data = await res.json();
       typingEl.remove();
 
       if (data.error) {
-        addSystemMsg('Erreur : ' + data.error);
+        addSysMsg('❌ ' + data.error);
       } else {
-        addMessage(data.response, 'agent', data.agent);
+        addMsg(data.response, 'agent', data.agent);
       }
-    } catch (err) {
+    } catch {
       typingEl.remove();
-      addSystemMsg('Impossible de joindre le serveur. Vérifiez que server.py est lancé.');
+      addSysMsg('Impossible de joindre le serveur.');
     }
 
     setLoading(false);
   }
 
   // ── DOM helpers ───────────────────────────────────────────
-  function addMessage(text, role, agentName) {
-    const meta = agentName ? AGENT_META[agentName] || AGENT_META.auto : null;
+  function addMsg(text, role, agentName) {
+    const meta = agentName ? (AGENT_META[agentName] || AGENT_META.auto) : null;
     const div  = document.createElement('div');
     div.className = `msg ${role}`;
 
@@ -406,14 +362,11 @@
         <div class="avatar">${meta.icon}</div>
         <div>
           <div class="agent-tag" data-agent="${agentName}">${meta.label}</div>
-          <div class="bubble">${escHtml(text)}</div>
+          <div class="bubble">${esc(text)}</div>
         </div>`;
     } else {
-      div.innerHTML = `
-        <div class="avatar">👤</div>
-        <div class="bubble">${escHtml(text)}</div>`;
+      div.innerHTML = `<div class="avatar">👤</div><div class="bubble">${esc(text)}</div>`;
     }
-
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
@@ -421,36 +374,24 @@
   function addTyping() {
     const div = document.createElement('div');
     div.className = 'msg agent';
-    div.innerHTML = `
-      <div class="avatar">🤖</div>
-      <div class="bubble">
-        <div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-      </div>`;
+    div.innerHTML = `<div class="avatar">🤖</div><div class="bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     return div;
   }
 
-  function addSystemMsg(text) {
-    const div = document.createElement('div');
-    div.style.cssText = 'text-align:center;color:#7a7a9a;font-size:12px;padding:4px 0;';
-    div.textContent = text;
-    messagesEl.appendChild(div);
+  function addSysMsg(text) {
+    const d = document.createElement('div');
+    d.className = 'sys-msg';
+    d.textContent = text;
+    messagesEl.appendChild(d);
   }
 
-  function setLoading(state) {
-    loading = state;
-    sendBtn.disabled = state;
-    inputEl.disabled = state;
-  }
+  function setLoading(v) { loading = v; sendBtn.disabled = v; inputEl.disabled = v; }
 
-  function escHtml(str) {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/\n/g, '<br>');
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
   }
 </script>
 </body>

@@ -53,12 +53,14 @@ def get_prompt(active: str | None) -> str:
 def main():
     print(BANNER)
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("⚠️  ANTHROPIC_API_KEY non défini.")
-        print("   Exécutez : export ANTHROPIC_API_KEY=sk-ant-...")
-        print("   Puis relancez : python3 agent.py\n")
+    from agents.base import ollama_available, OLLAMA_URL, OLLAMA_MODEL
+    if not ollama_available():
+        print(f"⚠️  Ollama n'est pas lancé ({OLLAMA_URL}).")
+        print("   1. Installez Ollama : https://ollama.com")
+        print(f"   2. Téléchargez un modèle : ollama pull {OLLAMA_MODEL}")
+        print("   3. Relancez ce script.\n")
         sys.exit(1)
+    print(f"   Modèle : {OLLAMA_MODEL}\n")
 
     initial_agent = None
     if len(sys.argv) > 1:

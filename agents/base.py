@@ -1,9 +1,12 @@
 import os
 import json
+import urllib.request
+import urllib.error
 from typing import Any
-import anthropic
 
-MODEL = "claude-sonnet-4-6"
+OLLAMA_URL   = os.environ.get("OLLAMA_URL",   "http://localhost:11434")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2")
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "agents")
 
 
@@ -22,67 +25,111 @@ def save_data(filename: str, data: list) -> None:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
+def _ollama_request(endpoint: str, payload: dict) -> dict:
+    url  = f"{OLLAMA_URL}{endpoint}"
+    data = json.dumps(payload).encode("utf-8")
+    req  = urllib.request.Request(
+        url, data=data, method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            return json.loads(resp.read())
+    except urllib.error.URLError as e:
+        raise ConnectionError(
+            f"Impossible de joindre Ollama sur {OLLAMA_URL}.\n"
+            f"Installez Ollama : https://ollama.com\n"
+            f"Puis lancez : ollama pull {OLLAMA_MODEL}\n"
+            f"Détail : {e}"
+        )
+
+
+def ollama_available() -> bool:
+    try:
+        urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=3)
+        return True
+    except Exception:
+        return False
+
+
+def list_local_models() -> list[str]:
+    try:
+        with urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=5) as r:
+            data = json.loads(r.read())
+        return [m["name"] for m in data.get("models", [])]
+    except Exception:
+        return []
+
+
 class BaseAgent:
     name: str = "Agent"
     system_prompt: str = "Tu es un assistant utile."
     tools: list[dict] = []
 
     def __init__(self):
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise EnvironmentError(
-                "ANTHROPIC_API_KEY non défini. Exécutez:\n"
-                "  export ANTHROPIC_API_KEY=sk-ant-..."
-            )
-        self.client = anthropic.Anthropic(api_key=api_key)
         self.history: list[dict] = []
+        self.model = OLLAMA_MODEL
 
     def handle_tool(self, tool_name: str, tool_input: dict) -> Any:
         raise NotImplementedError(f"Outil inconnu: {tool_name}")
 
+    def _build_messages(self, user_message: str) -> list[dict]:
+        msgs = [{"role": "system", "content": self.system_prompt}]
+        msgs.extend(self.history)
+        msgs.append({"role": "user", "content": user_message})
+        return msgs
+
     def chat(self, user_message: str) -> str:
         self.history.append({"role": "user", "content": user_message})
 
+        messages = [{"role": "system", "content": self.system_prompt}] + self.history
+
         while True:
-            kwargs = {
-                "model": MODEL,
-                "max_tokens": 4096,
-                "system": self.system_prompt,
-                "messages": self.history,
-            }
+            payload: dict = {"model": self.model, "messages": messages, "stream": False}
             if self.tools:
-                kwargs["tools"] = self.tools
+                # Convert Anthropic-style tool schema to Ollama/OpenAI format
+                payload["tools"] = [
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": t["name"],
+                            "description": t.get("description", ""),
+                            "parameters": t.get("input_schema", {}),
+                        },
+                    }
+                    for t in self.tools
+                ]
 
-            response = self.client.messages.create(**kwargs)
+            resp = _ollama_request("/api/chat", payload)
+            msg  = resp.get("message", {})
 
-            if response.stop_reason == "tool_use":
-                assistant_content = response.content
-                self.history.append({"role": "assistant", "content": assistant_content})
+            tool_calls = msg.get("tool_calls", [])
+            if tool_calls:
+                messages.append({"role": "assistant", "content": "", "tool_calls": tool_calls})
+                self.history.append({"role": "assistant", "content": "", "tool_calls": tool_calls})
 
-                tool_results = []
-                for block in assistant_content:
-                    if block.type == "tool_use":
+                for call in tool_calls:
+                    fn   = call.get("function", {})
+                    name = fn.get("name", "")
+                    args = fn.get("arguments", {})
+                    if isinstance(args, str):
                         try:
-                            result = self.handle_tool(block.name, block.input)
-                            tool_results.append({
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps(result, ensure_ascii=False),
-                            })
-                        except Exception as e:
-                            tool_results.append({
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": f"Erreur: {e}",
-                                "is_error": True,
-                            })
+                            args = json.loads(args)
+                        except json.JSONDecodeError:
+                            args = {}
+                    try:
+                        result = self.handle_tool(name, args)
+                        content = json.dumps(result, ensure_ascii=False)
+                    except Exception as e:
+                        content = f"Erreur: {e}"
 
-                self.history.append({"role": "user", "content": tool_results})
+                    tool_msg = {"role": "tool", "content": content}
+                    messages.append(tool_msg)
+                    self.history.append(tool_msg)
+
                 continue
 
-            text = "".join(
-                block.text for block in response.content if hasattr(block, "text")
-            )
+            text = msg.get("content", "")
             self.history.append({"role": "assistant", "content": text})
             return text
 
