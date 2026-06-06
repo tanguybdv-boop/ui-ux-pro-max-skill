@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agents IA — Planning · Tâches · Email</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f13;--surface:#18181f;--s2:#22222c;--border:#2e2e3d;
+  --text:#e8e8f0;--muted:#7a7a9a;
+  --planning:#6c8ef5;--tasks:#52d68a;--email:#f5a623;--auto:#a78bfa;
+  --ok:#4ade80;--err:#f87171;--r:14px;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;display:flex;flex-direction:column}
+
+/* Header */
+header{padding:11px 18px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.logo{font-size:17px;font-weight:700;letter-spacing:-.5px;white-space:nowrap}
+.logo span{color:var(--auto)}
+
+/* Status */
+#pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer}
+#dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+#pill.ok{border-color:#166534;color:var(--ok)} #pill.ok #dot{background:var(--ok)}
+#pill.err{border-color:#7f1d1d;color:var(--err)} #pill.err #dot{background:var(--err)}
+
+/* Model select */
+#modelSel{background:var(--s2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:8px;cursor:pointer;max-width:160px}
+#modelSel:focus{outline:none;border-color:var(--auto)}
+
+/* Tabs */
+.tabs{display:flex;gap:5px;margin-left:auto}
+.tab{padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab:hover{border-color:#555;color:var(--text)}
+.tab.on[data-a="auto"]    {background:#2d1f5e;border-color:var(--auto);    color:var(--auto)}
+.tab.on[data-a="planning"]{background:#1a2556;border-color:var(--planning);color:var(--planning)}
+.tab.on[data-a="tasks"]   {background:#0f3323;border-color:var(--tasks);   color:var(--tasks)}
+.tab.on[data-a="email"]   {background:#3d2800;border-color:var(--email);   color:var(--email)}
+.reset-btn{padding:5px 11px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s}
+.reset-btn:hover{border-color:#f55;color:#f77}
+
+/* Banner */
+#banner{display:none;margin:10px 18px 0;padding:13px 16px;border-radius:var(--r);background:#1c1010;border:1px solid #7f1d1d;color:#fca5a5;font-size:13px;line-height:1.8}
+#banner code{background:#2c1111;padding:1px 6px;border-radius:5px;font-size:12px}
+#banner a{color:#f87171}
+
+/* Messages */
+#msgs{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:13px;scroll-behavior:smooth}
+#msgs::-webkit-scrollbar{width:3px}
+#msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.msg{display:flex;gap:9px;max-width:820px;animation:up .18s ease}
+@keyframes up{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg.u{align-self:flex-end;flex-direction:row-reverse}
+.av{width:29px;height:29px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--s2)}
+.bubble{padding:10px 14px;border-radius:var(--r);line-height:1.65;font-size:13.5px;white-space:pre-wrap;word-break:break-word}
+.msg.u .bubble{background:var(--s2);border:1px solid var(--border);border-top-right-radius:3px}
+.msg.a .bubble{background:var(--surface);border:1px solid var(--border);border-top-left-radius:3px}
+.atag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.atag[data-a="planning"]{color:var(--planning)} .atag[data-a="tasks"]{color:var(--tasks)}
+.atag[data-a="email"]{color:var(--email)}       .atag[data-a="auto"]{color:var(--auto)}
+.typing{display:flex;align-items:center;gap:5px;padding:12px 14px}
+.d{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1.2s infinite}
+.d:nth-child(2){animation-delay:.2s}.d:nth-child(3){animation-delay:.4s}
+@keyframes b{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.sysmsg{text-align:center;color:var(--muted);font-size:12px;padding:1px 0}
+
+/* Welcome */
+.welcome{margin:auto;text-align:center;color:var(--muted);max-width:460px}
+.welcome h2{font-size:20px;color:var(--text);margin-bottom:8px}
+.welcome p{font-size:13.5px;line-height:1.7}
+.examples{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:16px}
+.ex{padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--s2);font-size:12.5px;color:var(--muted);cursor:pointer;transition:all .15s}
+.ex:hover{border-color:var(--auto);color:var(--text)}
+
+/* Input */
+.ia{padding:13px 18px 17px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.iw{display:flex;align-items:flex-end;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;transition:border-color .15s}
+.iw:focus-within{border-color:var(--auto)}
+textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13.5px;line-height:1.5;resize:none;max-height:130px;min-height:21px}
+textarea::placeholder{color:var(--muted)}
+.sb{width:33px;height:33px;border-radius:9px;border:none;background:var(--auto);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s}
+.sb:hover{background:#8b6ff8}.sb:disabled{background:var(--border);cursor:not-allowed}
+.sb svg{width:14px;height:14px}
+@media(max-width:580px){header{gap:7px}.tabs{gap:3px}.tab{padding:5px 8px;font-size:11.5px}#msgs{padding:12px 14px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🤖 <span>Agents</span> IA</div>
+  <div id="pill" onclick="checkOllama()" title="Cliquez pour vérifier">
+    <div id="dot"></div><span id="pillTxt">Connexion…</span>
+  </div>
+  <select id="modelSel" title="Modèle Ollama"><option value="">Modèle…</option></select>
+  <div class="tabs">
+    <button class="tab on" data-a="auto">⚡ Auto</button>
+    <button class="tab" data-a="planning">📅 Planning</button>
+    <button class="tab" data-a="tasks">✅ Tâches</button>
+    <button class="tab" data-a="email">✉️ Email</button>
+  </div>
+  <button class="reset-btn" id="resetBtn">↺ Reset</button>
+</header>
+
+<div id="banner">
+  ⚠️ <strong>Ollama n'est pas joignable.</strong> Deux causes possibles :<br>
+  <strong>1. Ollama n'est pas lancé</strong> — installez-le sur <a href="https://ollama.com" target="_blank">ollama.com</a>
+  puis téléchargez un modèle : <code>ollama pull llama3.2</code><br>
+  <strong>2. CORS bloqué</strong> (ouverture depuis <code>file://</code>) — relancez Ollama avec :<br>
+  &nbsp;&nbsp;Mac/Linux : <code>OLLAMA_ORIGINS=* ollama serve</code><br>
+  &nbsp;&nbsp;Windows : <code>set OLLAMA_ORIGINS=* && ollama serve</code><br>
+  Puis cliquez sur le point de statut pour re-vérifier.
+</div>
+
+<div id="msgs">
+  <div class="welcome" id="welcome">
+    <h2>Bonjour 👋</h2>
+    <p>Agents IA locaux via Ollama — aucune clé API, aucun serveur.<br>Toutes les données restent dans votre navigateur.</p>
+    <div class="examples">
+      <span class="ex" onclick="send(this.textContent)">Ajoute une réunion lundi à 10h</span>
+      <span class="ex" onclick="send(this.textContent)">Mes tâches urgentes du jour</span>
+      <span class="ex" onclick="send(this.textContent)">Rédige un mail de relance client</span>
+      <span class="ex" onclick="send(this.textContent)">Réorganise mes priorités</span>
+      <span class="ex" onclick="send(this.textContent)">Créneaux libres demain pour 1h</span>
+    </div>
+  </div>
+</div>
+
+<div class="ia">
+  <div class="iw">
+    <textarea id="inp" placeholder="Écrivez votre message… (Entrée pour envoyer)" rows="1"></textarea>
+    <button class="sb" id="sbtn" onclick="sendMsg()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const OLLAMA = 'http://localhost:11434';
+let   MODEL  = 'llama3.2';
+
+// ═══════════════════════════════════════════════════════════
+// STORAGE (localStorage)
+// ═══════════════════════════════════════════════════════════
+const DB = {
+  get(key)     { try { return JSON.parse(localStorage.getItem('ag_'+key)||'[]') } catch { return [] } },
+  set(key,val) { localStorage.setItem('ag_'+key, JSON.stringify(val)) },
+};
+
+// ═══════════════════════════════════════════════════════════
+// TOOLS — Planning
+// ═══════════════════════════════════════════════════════════
+const PLANNING_TOOLS = [
+  { name:'add_event',      description:'Ajouter un événement au calendrier',
+    input_schema:{ type:'object', required:['title','date','time'],
+      properties:{ title:{type:'string'}, date:{type:'string',description:'YYYY-MM-DD'},
+        time:{type:'string',description:'HH:MM'}, duration:{type:'integer',description:'minutes'},
+        location:{type:'string'}, notes:{type:'string'} }}},
+  { name:'list_events',    description:'Lister les événements',
+    input_schema:{ type:'object', properties:{ from_date:{type:'string'}, to_date:{type:'string'} }}},
+  { name:'delete_event',   description:'Supprimer un événement',
+    input_schema:{ type:'object', required:['event_id'], properties:{ event_id:{type:'string'} }}},
+  { name:'update_event',   description:'Modifier un événement',
+    input_schema:{ type:'object', required:['event_id'],
+      properties:{ event_id:{type:'string'}, title:{type:'string'}, date:{type:'string'},
+        time:{type:'string'}, duration:{type:'integer'}, location:{type:'string'}, notes:{type:'string'} }}},
+  { name:'get_today',      description:"Planning d'aujourd'hui",
+    input_schema:{ type:'object', properties:{} }},
+  { name:'find_free_slots', description:'Trouver des créneaux libres',
+    input_schema:{ type:'object', required:['date','duration'],
+      properties:{ date:{type:'string'}, duration:{type:'integer'} }}},
+];
+
+function execPlanning(name, args) {
+  const events = DB.get('events');
+  if (name === 'add_event') {
+    const ev = { id:uid(), title:args.title, date:args.date, time:args.time||'09:00',
+      duration:args.duration||60, location:args.location||'', notes:args.notes||'',
+      created_at:now() };
+    events.push(ev); DB.set('events', events);
+    return { success:true, event:ev };
+  }
+  if (name === 'list_events') {
+    const { from_date='', to_date='' } = args;
+    const r = events.filter(e => (!from_date||e.date>=from_date) && (!to_date||e.date<=to_date))
+                    .sort((a,b)=>a.date+a.time<b.date+b.time?-1:1);
+    return { events:r, count:r.length };
+  }
+  if (name === 'delete_event') {
+    const n = events.filter(e=>e.id!==args.event_id);
+    if (n.length===events.length) return { success:false, error:'Introuvable' };
+    DB.set('events', n); return { success:true };
+  }
+  if (name === 'update_event') {
+    const ev = events.find(e=>e.id===args.event_id);
+    if (!ev) return { success:false, error:'Introuvable' };
+    ['title','date','time','duration','location','notes'].forEach(k=>{ if(k in args) ev[k]=args[k] });
+    DB.set('events', events); return { success:true, event:ev };
+  }
+  if (name === 'get_today') {
+    const today = todayISO();
+    const r = events.filter(e=>e.date===today).sort((a,b)=>a.time<b.time?-1:1);
+    return { date:today, events:r, count:r.length };
+  }
+  if (name === 'find_free_slots') {
+    const { date, duration=60 } = args;
+    const day = events.filter(e=>e.date===date).sort((a,b)=>a.time<b.time?-1:1);
+    const slots = []; let cur = 8*60;
+    day.forEach(e => {
+      const [h,m] = e.time.split(':').map(Number);
+      const start = h*60+m, end = start+(e.duration||60);
+      if (start-cur >= duration) slots.push({ from:toHM(cur), to:toHM(start) });
+      cur = Math.max(cur, end);
+    });
+    if (19*60-cur >= duration) slots.push({ from:toHM(cur), to:'19:00' });
+    return { date, free_slots:slots };
+  }
+  throw new Error('Outil inconnu: '+name);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOOLS — Tasks
+// ═══════════════════════════════════════════════════════════
+const PRIO = { haute:1, moyenne:2, basse:3 };
+
+const TASKS_TOOLS = [
+  { name:'add_task',       description:'Ajouter une tâche',
+    input_schema:{ type:'object', required:['title'],
+      properties:{ title:{type:'string'}, priority:{type:'string',enum:['haute','moyenne','basse']},
+        due_date:{type:'string'}, project:{type:'string'}, notes:{type:'string'} }}},
+  { name:'list_tasks',     description:'Lister les tâches',
+    input_schema:{ type:'object',
+      properties:{ status:{type:'string',enum:['todo','done','all']},
+        priority:{type:'string',enum:['haute','moyenne','basse']}, project:{type:'string'} }}},
+  { name:'complete_task',  description:'Marquer une tâche terminée',
+    input_schema:{ type:'object', required:['task_id'], properties:{ task_id:{type:'string'} }}},
+  { name:'update_task',    description:'Modifier une tâche',
+    input_schema:{ type:'object', required:['task_id'],
+      properties:{ task_id:{type:'string'}, title:{type:'string'},
+        priority:{type:'string',enum:['haute','moyenne','basse']},
+        due_date:{type:'string'}, project:{type:'string'}, notes:{type:'string'} }}},
+  { name:'delete_task',    description:'Supprimer une tâche',
+    input_schema:{ type:'object', required:['task_id'], properties:{ task_id:{type:'string'} }}},
+  { name:'reprioritize',   description:'Réorganiser les priorités automatiquement',
+    input_schema:{ type:'object', properties:{} }},
+  { name:'get_today_tasks',description:'Tâches du jour (haute priorité ou dues aujourd\'hui)',
+    input_schema:{ type:'object', properties:{} }},
+];
+
+function execTasks(name, args) {
+  const tasks = DB.get('tasks');
+  if (name === 'add_task') {
+    const t = { id:uid(), title:args.title, priority:args.priority||'moyenne',
+      due_date:args.due_date||'', project:args.project||'', notes:args.notes||'',
+      status:'todo', created_at:now(), completed_at:null };
+    tasks.push(t); DB.set('tasks', tasks);
+    return { success:true, task:t };
+  }
+  if (name === 'list_tasks') {
+    const st = args.status||'todo';
+    let r = st==='all' ? tasks : tasks.filter(t=>t.status===st);
+    if (args.priority) r = r.filter(t=>t.priority===args.priority);
+    if (args.project)  r = r.filter(t=>t.project.toLowerCase().includes(args.project.toLowerCase()));
+    r.sort((a,b) => (PRIO[a.priority]||9)-(PRIO[b.priority]||9) || (a.due_date||'9')<(b.due_date||'9')?-1:1);
+    return { tasks:r, count:r.length };
+  }
+  if (name === 'complete_task') {
+    const t = tasks.find(t=>t.id===args.task_id);
+    if (!t) return { success:false, error:'Introuvable' };
+    t.status='done'; t.completed_at=now();
+    DB.set('tasks', tasks); return { success:true, task:t };
+  }
+  if (name === 'update_task') {
+    const t = tasks.find(t=>t.id===args.task_id);
+    if (!t) return { success:false, error:'Introuvable' };
+    ['title','priority','due_date','project','notes'].forEach(k=>{ if(k in args) t[k]=args[k] });
+    DB.set('tasks', tasks); return { success:true, task:t };
+  }
+  if (name === 'delete_task') {
+    const n = tasks.filter(t=>t.id!==args.task_id);
+    if (n.length===tasks.length) return { success:false, error:'Introuvable' };
+    DB.set('tasks', n); return { success:true };
+  }
+  if (name === 'reprioritize') {
+    const today = todayISO();
+    tasks.filter(t=>t.status==='todo').forEach(t => {
+      if (t.due_date && t.due_date <= today) t.priority='haute';
+    });
+    DB.set('tasks', tasks);
+    const r = tasks.filter(t=>t.status==='todo').sort((a,b)=>(PRIO[a.priority]||9)-(PRIO[b.priority]||9));
+    return { success:true, reordered_tasks:r };
+  }
+  if (name === 'get_today_tasks') {
+    const today = todayISO();
+    const r = tasks.filter(t => t.status==='todo' &&
+      (t.priority==='haute' || (t.due_date && t.due_date<=today)))
+      .sort((a,b)=>(PRIO[a.priority]||9)-(PRIO[b.priority]||9));
+    return { date:today, tasks:r, count:r.length };
+  }
+  throw new Error('Outil inconnu: '+name);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOOLS — Email
+// ═══════════════════════════════════════════════════════════
+const EMAIL_TOOLS = [
+  { name:'draft_email',    description:'Rédiger et sauvegarder un email brouillon',
+    input_schema:{ type:'object', required:['to','subject','body'],
+      properties:{ to:{type:'string'}, subject:{type:'string'}, body:{type:'string'},
+        tone:{type:'string',enum:['formel','professionnel','amical','urgent']},
+        tags:{type:'array',items:{type:'string'}} }}},
+  { name:'list_drafts',    description:'Lister les brouillons',
+    input_schema:{ type:'object', properties:{ tag:{type:'string'} }}},
+  { name:'get_draft',      description:'Afficher un brouillon complet',
+    input_schema:{ type:'object', required:['draft_id'], properties:{ draft_id:{type:'string'} }}},
+  { name:'delete_draft',   description:'Supprimer un brouillon',
+    input_schema:{ type:'object', required:['draft_id'], properties:{ draft_id:{type:'string'} }}},
+  { name:'save_template',  description:"Sauvegarder un modèle d'email",
+    input_schema:{ type:'object', required:['name','subject','body'],
+      properties:{ name:{type:'string'}, subject:{type:'string'}, body:{type:'string'},
+        description:{type:'string'} }}},
+  { name:'list_templates', description:'Lister les modèles disponibles',
+    input_schema:{ type:'object', properties:{} }},
+];
+
+function execEmail(name, args) {
+  const data = DB.get('emails');
+  const drafts    = data.filter(d=>d.type==='draft');
+  const templates = data.filter(d=>d.type==='template');
+  if (name === 'draft_email') {
+    const d = { id:uid(), type:'draft', to:args.to, subject:args.subject, body:args.body,
+      tone:args.tone||'professionnel', tags:args.tags||[], created_at:now() };
+    data.push(d); DB.set('emails', data);
+    return { success:true, draft:d };
+  }
+  if (name === 'list_drafts') {
+    const tag = args.tag||'';
+    const r = drafts.filter(d=>!tag||d.tags.includes(tag));
+    return { drafts:r.map(d=>({id:d.id,to:d.to,subject:d.subject,tone:d.tone,tags:d.tags,created_at:d.created_at})), count:r.length };
+  }
+  if (name === 'get_draft') {
+    const d = drafts.find(d=>d.id===args.draft_id);
+    return d || { error:'Introuvable' };
+  }
+  if (name === 'delete_draft') {
+    const n = data.filter(d=>d.id!==args.draft_id);
+    if (n.length===data.length) return { success:false, error:'Introuvable' };
+    DB.set('emails', n); return { success:true };
+  }
+  if (name === 'save_template') {
+    const t = { id:uid(), type:'template', name:args.name, subject:args.subject,
+      body:args.body, description:args.description||'', created_at:now() };
+    data.push(t); DB.set('emails', data);
+    return { success:true, template:t };
+  }
+  if (name === 'list_templates') {
+    return { templates:templates.map(t=>({id:t.id,name:t.name,description:t.description,subject:t.subject})), count:templates.length };
+  }
+  throw new Error('Outil inconnu: '+name);
+}
+
+// ═══════════════════════════════════════════════════════════
+// AGENT CONFIG
+// ═══════════════════════════════════════════════════════════
+const TODAY_FR = new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+const AGENTS = {
+  planning: {
+    label:'Planning', icon:'📅',
+    system:`Tu es un assistant de planification expert. Tu gères un calendrier personnel.
+Ajoute, modifie, supprime des événements. Détecte les conflits. Propose des créneaux libres.
+Réponds toujours en français, de façon concise. Date du jour : ${TODAY_FR}.`,
+    tools: PLANNING_TOOLS,
+    exec:  execPlanning,
+    history: [],
+  },
+  tasks: {
+    label:'Tâches', icon:'✅',
+    system:`Tu es un assistant de gestion des tâches expert.
+Gère les todos, priorités (haute/moyenne/basse), projets. Utilise la matrice Eisenhower.
+Réponds toujours en français, de façon concise. Date du jour : ${TODAY_FR}.`,
+    tools: TASKS_TOOLS,
+    exec:  execTasks,
+    history: [],
+  },
+  email: {
+    label:'Email', icon:'✉️',
+    system:`Tu es un assistant email expert. Rédige, améliore et organise les emails.
+Sauvegarde les brouillons et les modèles. Emails clairs, concis, professionnels.
+Réponds toujours en français sauf si une autre langue est demandée. Date du jour : ${TODAY_FR}.`,
+    tools: EMAIL_TOOLS,
+    exec:  execEmail,
+    history: [],
+  },
+};
+
+// ═══════════════════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════════════════
+const KEYWORDS = {
+  planning: /rendez-vous|réunion|meeting|agenda|calendrier|planning|créneau|horaire|événement|rappel|schedule|disponib|libre|occupé|demain|semaine|matin|après-midi|soir|heure/i,
+  tasks:    /tâche|task|todo|faire|priorité|projet|urgent|important|liste|deadline|échéance|terminer|complet|finir|réorganis|backlog/i,
+  email:    /mail|email|e-mail|message|envoyer|rédiger|répondre|reply|objet|destinataire|brouillon|draft|template|modèle|courrier/i,
+};
+
+function detectAgent(msg) {
+  const scores = {};
+  for (const [a, re] of Object.entries(KEYWORDS)) {
+    const m = msg.match(new RegExp(re.source, 'gi'));
+    if (m) scores[a] = m.length;
+  }
+  if (!Object.keys(scores).length) return 'tasks';
+  return Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+// ═══════════════════════════════════════════════════════════
+// OLLAMA CALL
+// ═══════════════════════════════════════════════════════════
+async function ollamaChat(agentKey, userMsg) {
+  const agent = AGENTS[agentKey];
+  agent.history.push({ role:'user', content:userMsg });
+
+  const messages = [{ role:'system', content:agent.system }, ...agent.history];
+  const tools = agent.tools.map(t => ({
+    type:'function',
+    function:{ name:t.name, description:t.description, parameters:t.input_schema }
+  }));
+
+  while (true) {
+    const res = await fetch(`${OLLAMA}/api/chat`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:MODEL, messages, tools, stream:false }),
+    });
+    if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+    const data = await res.json();
+    const msg  = data.message || {};
+
+    if (msg.tool_calls && msg.tool_calls.length) {
+      messages.push({ role:'assistant', content:'', tool_calls:msg.tool_calls });
+      agent.history.push({ role:'assistant', content:'', tool_calls:msg.tool_calls });
+
+      for (const call of msg.tool_calls) {
+        const fn   = call.function || {};
+        let   args = fn.arguments || {};
+        if (typeof args === 'string') { try { args = JSON.parse(args) } catch { args={} } }
+        let result;
+        try { result = agent.exec(fn.name, args) }
+        catch(e) { result = { error: e.message } }
+        const toolMsg = { role:'tool', content: JSON.stringify(result) };
+        messages.push(toolMsg);
+        agent.history.push(toolMsg);
+      }
+      continue;
+    }
+
+    const text = msg.content || '';
+    agent.history.push({ role:'assistant', content:text });
+    return text;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// OLLAMA STATUS
+// ═══════════════════════════════════════════════════════════
+async function checkOllama() {
+  const pill = document.getElementById('pill');
+  const txt  = document.getElementById('pillTxt');
+  try {
+    const r    = await fetch(`${OLLAMA}/api/tags`, { signal: AbortSignal.timeout(3000) });
+    const data = await r.json();
+    pill.className = 'ok'; txt.textContent = MODEL;
+    document.getElementById('banner').style.display = 'none';
+
+    const sel = document.getElementById('modelSel');
+    const models = (data.models||[]).map(m=>m.name);
+    sel.innerHTML = '';
+    models.forEach(m => {
+      const o = document.createElement('option');
+      o.value = o.textContent = m;
+      if (m === MODEL || m.startsWith(MODEL.split(':')[0])) { o.selected=true; MODEL=m; }
+      sel.appendChild(o);
+    });
+    if (!sel.value && models.length) { sel.value = models[0]; MODEL = models[0]; }
+  } catch {
+    pill.className = 'err'; txt.textContent = 'Ollama hors ligne';
+    document.getElementById('banner').style.display = 'block';
+  }
+}
+
+checkOllama();
+setInterval(checkOllama, 20000);
+
+document.getElementById('modelSel').addEventListener('change', e => {
+  MODEL = e.target.value;
+  document.getElementById('pillTxt').textContent = MODEL;
+});
+
+// ═══════════════════════════════════════════════════════════
+// UI
+// ═══════════════════════════════════════════════════════════
+let activeAgent = 'auto';
+let loading     = false;
+
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+    btn.classList.add('on');
+    activeAgent = btn.dataset.a;
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  const key = activeAgent === 'auto' ? null : activeAgent;
+  if (key) AGENTS[key].history = [];
+  else Object.values(AGENTS).forEach(a=>a.history=[]);
+  document.querySelectorAll('.msg').forEach(m=>m.remove());
+  document.getElementById('welcome').style.display='';
+  sysmsg('Conversation réinitialisée.');
+});
+
+const inp = document.getElementById('inp');
+inp.addEventListener('input', () => { inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,130)+'px'; });
+inp.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()} });
+
+function send(text) { inp.value=text; sendMsg(); }
+
+async function sendMsg() {
+  const text = inp.value.trim();
+  if (!text || loading) return;
+  document.getElementById('welcome').style.display='none';
+  addMsg(text, 'u');
+  inp.value=''; inp.style.height='auto';
+
+  const agentKey = activeAgent==='auto' ? detectAgent(text) : activeAgent;
+  const typingEl = addTyping(agentKey);
+  setLoad(true);
+
+  try {
+    const reply = await ollamaChat(agentKey, text);
+    typingEl.remove();
+    addMsg(reply, 'a', agentKey);
+  } catch(e) {
+    typingEl.remove();
+    sysmsg('❌ '+e.message+' — Vérifiez qu\'Ollama est lancé avec OLLAMA_ORIGINS=*');
+  }
+  setLoad(false);
+}
+
+function addMsg(text, role, agentKey) {
+  const meta = agentKey ? AGENTS[agentKey] : null;
+  const div  = document.createElement('div');
+  div.className = 'msg '+(role==='u'?'u':'a');
+  if (role==='a') {
+    div.innerHTML = `<div class="av">${meta.icon}</div>
+      <div><div class="atag" data-a="${agentKey}">${meta.label}</div>
+      <div class="bubble">${esc(text)}</div></div>`;
+  } else {
+    div.innerHTML = `<div class="av">👤</div><div class="bubble">${esc(text)}</div>`;
+  }
+  document.getElementById('msgs').appendChild(div);
+  document.getElementById('msgs').scrollTop = 9999;
+}
+
+function addTyping(agentKey) {
+  const meta = AGENTS[agentKey]||AGENTS.tasks;
+  const div  = document.createElement('div');
+  div.className='msg a';
+  div.innerHTML=`<div class="av">${meta.icon}</div><div class="bubble"><div class="typing"><div class="d"></div><div class="d"></div><div class="d"></div></div></div>`;
+  document.getElementById('msgs').appendChild(div);
+  document.getElementById('msgs').scrollTop = 9999;
+  return div;
+}
+
+function sysmsg(t) {
+  const d=document.createElement('div');
+  d.className='sysmsg'; d.textContent=t;
+  document.getElementById('msgs').appendChild(d);
+}
+
+function setLoad(v) { loading=v; document.getElementById('sbtn').disabled=v; inp.disabled=v; }
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function uid()     { return Math.random().toString(36).slice(2,9) }
+function now()     { return new Date().toISOString() }
+function todayISO(){ return new Date().toISOString().slice(0,10) }
+function toHM(min) { return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0') }
+</script>
+</body>
+</html>
