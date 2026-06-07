@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Locale — Rentabilité</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #020617;
+      --surface:    #0F172A;
+      --surface2:   #1E293B;
+      --border:     #334155;
+      --muted:      #475569;
+      --fg:         #F8FAFC;
+      --fg-muted:   #94A3B8;
+      --accent:     #22C55E;
+      --accent-dim: rgba(34,197,94,.12);
+      --red:        #EF4444;
+      --red-dim:    rgba(239,68,68,.12);
+      --amber:      #F59E0B;
+      --amber-dim:  rgba(245,158,11,.12);
+      --blue:       #3B82F6;
+      --glass:      rgba(255,255,255,.04);
+      --glass-border: rgba(255,255,255,.08);
+      --radius:     12px;
+      --radius-lg:  18px;
+      --shadow:     0 4px 24px rgba(0,0,0,.4);
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Fira Sans', sans-serif;
+      min-height: 100dvh;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; flex-direction: column; min-height: 100dvh; }
+
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(2,6,23,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 0 24px;
+    }
+    .header-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; align-items: center; gap: 16px;
+      height: 64px;
+    }
+    .logo {
+      font-family: 'Fira Code', monospace;
+      font-weight: 700; font-size: 1.1rem;
+      color: var(--fg);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .logo-dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; }
+    .header-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+    main {
+      flex: 1;
+      max-width: 1280px; margin: 0 auto;
+      width: 100%; padding: 28px 24px 60px;
+    }
+
+    /* ── Sections ── */
+    .section-title {
+      font-family: 'Fira Code', monospace;
+      font-size: .75rem; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--fg-muted); margin-bottom: 14px;
+    }
+
+    /* ── KPI Cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 28px;
+    }
+    @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+    .kpi-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 22px 20px 18px;
+      position: relative; overflow: hidden;
+      transition: border-color 200ms, transform 200ms;
+    }
+    .kpi-card:hover { border-color: var(--border); transform: translateY(-2px); }
+    .kpi-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+    .kpi-card.green::before  { background: var(--accent); }
+    .kpi-card.red::before    { background: var(--red); }
+    .kpi-card.amber::before  { background: var(--amber); }
+    .kpi-card.blue::before   { background: var(--blue); }
+
+    .kpi-label {
+      font-size: .78rem; color: var(--fg-muted);
+      font-weight: 500; margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-family: 'Fira Code', monospace;
+      font-size: 1.8rem; font-weight: 700; line-height: 1;
+    }
+    .kpi-value.green  { color: var(--accent); }
+    .kpi-value.red    { color: var(--red); }
+    .kpi-value.amber  { color: var(--amber); }
+    .kpi-value.blue   { color: var(--blue); }
+    .kpi-sub { font-size: .75rem; color: var(--fg-muted); margin-top: 8px; }
+
+    /* ── Charts Row ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px; margin-bottom: 28px;
+    }
+    @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 22px 20px 16px;
+    }
+    .chart-title {
+      font-size: .85rem; font-weight: 600;
+      color: var(--fg-muted); margin-bottom: 16px;
+    }
+    .chart-wrap { position: relative; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .filter-group { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+
+    select, input[type="month"] {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--fg);
+      font-family: 'Fira Sans', sans-serif;
+      font-size: .85rem;
+      padding: 8px 12px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 150ms;
+    }
+    select:focus, input[type="month"]:focus { border-color: var(--accent); }
+
+    /* ── Table ── */
+    .table-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .table-scroll { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    thead tr {
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid var(--glass-border);
+    }
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: .72rem; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--fg-muted);
+    }
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      transition: background 150ms;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.03); }
+    td {
+      padding: 12px 16px;
+      font-size: .875rem;
+    }
+    .type-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .75rem; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .type-badge.entree  { background: var(--accent-dim); color: var(--accent); }
+    .type-badge.sortie  { background: var(--red-dim);    color: var(--red); }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .amount {
+      font-family: 'Fira Code', monospace;
+      font-weight: 600; font-size: .9rem;
+    }
+    .amount.entree { color: var(--accent); }
+    .amount.sortie { color: var(--red); }
+
+    .action-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 6px; border-radius: 6px;
+      color: var(--fg-muted);
+      transition: color 150ms, background 150ms;
+      display: inline-flex; align-items: center;
+    }
+    .action-btn:hover { color: var(--fg); background: var(--glass-border); }
+    .action-btn.del:hover { color: var(--red); }
+
+    .empty-state {
+      padding: 60px 24px; text-align: center;
+      color: var(--fg-muted); font-size: .9rem;
+    }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: .4; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'Fira Sans', sans-serif;
+      font-size: .875rem; font-weight: 600;
+      padding: 9px 18px; border-radius: 9px;
+      border: none; cursor: pointer;
+      transition: opacity 150ms, transform 150ms, box-shadow 150ms;
+    }
+    .btn:hover { opacity: .9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); opacity: 1; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #021c0c;
+      box-shadow: 0 0 20px rgba(34,197,94,.25);
+    }
+    .btn-ghost {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--fg-muted);
+    }
+    .btn-ghost:hover { color: var(--fg); border-color: var(--border); }
+    .btn-danger {
+      background: var(--red-dim);
+      border: 1px solid rgba(239,68,68,.2);
+      color: var(--red);
+    }
+    .btn-sm { padding: 6px 12px; font-size: .8rem; border-radius: 7px; }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      width: 100%; max-width: 480px;
+      padding: 28px;
+      animation: modal-in 200ms ease-out;
+    }
+    @keyframes modal-in {
+      from { opacity: 0; transform: scale(.96) translateY(8px); }
+      to   { opacity: 1; transform: scale(1)  translateY(0); }
+    }
+
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-title { font-weight: 700; font-size: 1.1rem; }
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--fg-muted); padding: 4px;
+      border-radius: 6px; display: flex;
+      transition: color 150ms;
+    }
+    .modal-close:hover { color: var(--fg); }
+
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: .8rem; font-weight: 600; color: var(--fg-muted); margin-bottom: 6px; }
+    .form-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px; color: var(--fg);
+      font-family: 'Fira Sans', sans-serif;
+      font-size: .9rem; padding: 10px 14px;
+      outline: none; transition: border-color 150ms;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--muted); }
+
+    .type-toggle { display: flex; gap: 8px; }
+    .type-radio { display: none; }
+    .type-label {
+      flex: 1; text-align: center;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      cursor: pointer; font-size: .875rem; font-weight: 600;
+      color: var(--fg-muted);
+      transition: all 150ms;
+    }
+    .type-radio[value="entree"]:checked + .type-label {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .type-radio[value="sortie"]:checked + .type-label {
+      background: var(--red-dim);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .modal-footer { display: flex; gap: 10px; margin-top: 24px; }
+    .modal-footer .btn { flex: 1; justify-content: center; }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 300;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: .85rem; font-weight: 500;
+      color: var(--fg);
+      box-shadow: var(--shadow);
+      animation: toast-in 250ms ease-out;
+      max-width: 280px;
+    }
+    .toast.success { border-color: rgba(34,197,94,.3); color: var(--accent); }
+    .toast.error   { border-color: rgba(239,68,68,.3); color: var(--red); }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--glass-border); margin: 24px 0; }
+
+    /* ── Period selector pills ── */
+    .period-pills { display: flex; gap: 6px; }
+    .pill {
+      padding: 5px 14px; border-radius: 20px;
+      font-size: .78rem; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border);
+      background: none; color: var(--fg-muted);
+      transition: all 150ms;
+    }
+    .pill.active, .pill:hover {
+      background: var(--surface2); color: var(--fg); border-color: var(--accent);
+    }
+
+    /* ── Category tag ── */
+    .cat-tag {
+      background: var(--surface2);
+      color: var(--fg-muted);
+      font-size: .72rem; padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* ── Rentability indicator ── */
+    .rentability-bar {
+      height: 6px; border-radius: 3px;
+      background: var(--surface2);
+      overflow: hidden; margin-top: 8px;
+    }
+    .rentability-fill {
+      height: 100%; border-radius: 3px;
+      transition: width 600ms ease;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-dot"></div>
+        Gestion Locale
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost btn-sm" id="exportBtn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Exporter CSV
+        </button>
+        <button class="btn btn-primary" id="addBtn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Ajouter
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main>
+    <!-- Period selector -->
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap;">
+      <div class="period-pills">
+        <button class="pill active" data-period="month">Ce mois</button>
+        <button class="pill" data-period="quarter">Ce trimestre</button>
+        <button class="pill" data-period="year">Cette année</button>
+        <button class="pill" data-period="all">Tout</button>
+      </div>
+      <input type="month" id="monthFilter" style="display:none;">
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card green">
+        <div class="kpi-label">Total Entrées</div>
+        <div class="kpi-value green" id="kpiEntrees">0,00 €</div>
+        <div class="kpi-sub" id="kpiEntreesCount">0 transaction(s)</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Total Sorties</div>
+        <div class="kpi-value red" id="kpiSorties">0,00 €</div>
+        <div class="kpi-sub" id="kpiSortiesCount">0 transaction(s)</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Résultat Net</div>
+        <div class="kpi-value" id="kpiResultat">0,00 €</div>
+        <div class="rentability-bar"><div class="rentability-fill" id="rentabilityFill" style="width:0%;background:var(--accent)"></div></div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-label">Marge Nette</div>
+        <div class="kpi-value" id="kpiMarge">—</div>
+        <div class="kpi-sub" id="kpiMargeLabel">sur le chiffre d'affaires</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Évolution mensuelle</div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="chartTrend"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Répartition</div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="chartDonut"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="section-title">Transactions</div>
+    <div class="toolbar">
+      <select id="filterType">
+        <option value="all">Toutes</option>
+        <option value="entree">Entrées</option>
+        <option value="sortie">Sorties</option>
+      </select>
+      <select id="filterCat">
+        <option value="all">Toutes catégories</option>
+      </select>
+      <select id="sortBy" style="margin-left:auto;">
+        <option value="date-desc">Date ↓</option>
+        <option value="date-asc">Date ↑</option>
+        <option value="amount-desc">Montant ↓</option>
+        <option value="amount-asc">Montant ↑</option>
+      </select>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table id="txTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Catégorie</th>
+              <th>Type</th>
+              <th style="text-align:right">Montant</th>
+              <th style="width:80px"></th>
+            </tr>
+          </thead>
+          <tbody id="txBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:.3"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <div>Aucune transaction. Commencez par en ajouter une.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Ajout/Édition -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Nouvelle transaction</div>
+      <button class="modal-close" id="modalClose" aria-label="Fermer">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="txForm" novalidate>
+      <input type="hidden" id="editId">
+
+      <div class="form-group">
+        <label>Type</label>
+        <div class="type-toggle">
+          <input type="radio" class="type-radio" name="type" id="typeEntree" value="entree" checked>
+          <label for="typeEntree" class="type-label">+ Entrée</label>
+          <input type="radio" class="type-radio" name="type" id="typeSortie" value="sortie">
+          <label for="typeSortie" class="type-label">− Sortie</label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fMontant">Montant (€) *</label>
+          <input class="form-input" type="number" id="fMontant" min="0" step="0.01" placeholder="0,00" required>
+        </div>
+        <div class="form-group">
+          <label for="fDate">Date *</label>
+          <input class="form-input" type="date" id="fDate" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="fDesc">Description *</label>
+        <input class="form-input" type="text" id="fDesc" placeholder="Ex: Facture client #42" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fCat">Catégorie</label>
+          <input class="form-input" list="catList" id="fCat" placeholder="Ex: Ventes, Loyer…">
+          <datalist id="catList"></datalist>
+        </div>
+        <div class="form-group">
+          <label for="fNote">Note (optionnel)</label>
+          <input class="form-input" type="text" id="fNote" placeholder="Détails…">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="cancelBtn">Annuler</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── Data Store ──────────────────────────────────────────────────────────────
+const DB_KEY = 'gestion_locale_v2';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY)) || []; }
+  catch { return []; }
+}
+function saveData(data) {
+  localStorage.setItem(DB_KEY, JSON.stringify(data));
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+let transactions = loadData();
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function fmt(n) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+}
+function fmtPct(n) { return n.toFixed(1) + ' %'; }
+function fmtDate(d) {
+  return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+}
+function today() { return new Date().toISOString().slice(0, 10); }
+
+// ── Period Filter ────────────────────────────────────────────────────────────
+let currentPeriod = 'month';
+
+function getFilteredTx() {
+  const now = new Date();
+  const typeF = document.getElementById('filterType').value;
+  const catF  = document.getElementById('filterCat').value;
+  const sortF = document.getElementById('sortBy').value;
+
+  let filtered = transactions.filter(t => {
+    const d = new Date(t.date + 'T00:00:00');
+    if (currentPeriod === 'month')   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (currentPeriod === 'quarter') {
+      const q = Math.floor(now.getMonth() / 3);
+      return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear();
+    }
+    if (currentPeriod === 'year')    return d.getFullYear() === now.getFullYear();
+    return true;
+  });
+
+  if (typeF !== 'all') filtered = filtered.filter(t => t.type === typeF);
+  if (catF  !== 'all') filtered = filtered.filter(t => (t.cat || 'Sans catégorie') === catF);
+
+  filtered.sort((a, b) => {
+    if (sortF === 'date-desc')   return b.date.localeCompare(a.date);
+    if (sortF === 'date-asc')    return a.date.localeCompare(b.date);
+    if (sortF === 'amount-desc') return b.amount - a.amount;
+    if (sortF === 'amount-asc')  return a.amount - b.amount;
+    return 0;
+  });
+  return filtered;
+}
+
+// ── Compute KPIs ─────────────────────────────────────────────────────────────
+function computeKPIs(filtered) {
+  const entrees = filtered.filter(t => t.type === 'entree').reduce((s, t) => s + t.amount, 0);
+  const sorties = filtered.filter(t => t.type === 'sortie').reduce((s, t) => s + t.amount, 0);
+  const resultat = entrees - sorties;
+  const marge = entrees > 0 ? (resultat / entrees) * 100 : null;
+  return { entrees, sorties, resultat, marge };
+}
+
+// ── Render KPIs ───────────────────────────────────────────────────────────────
+function renderKPIs(filtered) {
+  const { entrees, sorties, resultat, marge } = computeKPIs(filtered);
+  const ec = filtered.filter(t => t.type === 'entree').length;
+  const sc = filtered.filter(t => t.type === 'sortie').length;
+
+  document.getElementById('kpiEntrees').textContent = fmt(entrees);
+  document.getElementById('kpiSorties').textContent = fmt(sorties);
+  document.getElementById('kpiEntreesCount').textContent = ec + ' transaction(s)';
+  document.getElementById('kpiSortiesCount').textContent = sc + ' transaction(s)';
+
+  const resEl = document.getElementById('kpiResultat');
+  resEl.textContent = fmt(resultat);
+  resEl.className = 'kpi-value ' + (resultat >= 0 ? 'green' : 'red');
+
+  const fill = document.getElementById('rentabilityFill');
+  if (entrees > 0) {
+    const pct = Math.max(0, Math.min(100, (resultat / entrees) * 100));
+    fill.style.width = pct + '%';
+    fill.style.background = resultat >= 0 ? 'var(--accent)' : 'var(--red)';
+  } else {
+    fill.style.width = '0%';
+  }
+
+  const margeEl = document.getElementById('kpiMarge');
+  const margeLabel = document.getElementById('kpiMargeLabel');
+  if (marge !== null) {
+    margeEl.textContent = fmtPct(marge);
+    margeEl.className = 'kpi-value ' + (marge >= 0 ? (marge >= 20 ? 'green' : 'amber') : 'red');
+    margeLabel.textContent = marge >= 20 ? 'Bonne marge ✓' : marge >= 0 ? 'Marge faible' : 'Déficitaire';
+  } else {
+    margeEl.textContent = '—';
+    margeEl.className = 'kpi-value blue';
+    margeLabel.textContent = 'Aucune entrée';
+  }
+}
+
+// ── Render Table ──────────────────────────────────────────────────────────────
+function renderTable(filtered) {
+  const tbody = document.getElementById('txBody');
+  const empty = document.getElementById('emptyState');
+  tbody.innerHTML = '';
+
+  if (filtered.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  filtered.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--fg-muted);font-size:.8rem;">${fmtDate(t.date)}</td>
+      <td>
+        <div style="font-weight:500;">${escHtml(t.desc)}</div>
+        ${t.note ? `<div style="font-size:.75rem;color:var(--fg-muted);margin-top:2px;">${escHtml(t.note)}</div>` : ''}
+      </td>
+      <td><span class="cat-tag">${escHtml(t.cat || 'Non classé')}</span></td>
+      <td>
+        <span class="type-badge ${t.type}">
+          <span class="badge-dot"></span>
+          ${t.type === 'entree' ? 'Entrée' : 'Sortie'}
+        </span>
+      </td>
+      <td style="text-align:right">
+        <span class="amount ${t.type}">${t.type === 'entree' ? '+' : '−'} ${fmt(t.amount)}</span>
+      </td>
+      <td style="text-align:right">
+        <button class="action-btn" onclick="editTx('${t.id}')" title="Modifier" aria-label="Modifier">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="action-btn del" onclick="deleteTx('${t.id}')" title="Supprimer" aria-label="Supprimer">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Category Filter Sync ──────────────────────────────────────────────────────
+function syncCatFilter() {
+  const cats = [...new Set(transactions.map(t => t.cat || 'Non classé'))].sort();
+  const sel = document.getElementById('filterCat');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">Toutes catégories</option>';
+  cats.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    if (c === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+  // datalist for form
+  const dl = document.getElementById('catList');
+  dl.innerHTML = '';
+  cats.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; dl.appendChild(o);
+  });
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+let chartTrend = null, chartDonut = null;
+
+function buildTrendData() {
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ label: d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }), year: d.getFullYear(), month: d.getMonth() });
+  }
+  const entrees = months.map(m => transactions.filter(t => {
+    const d = new Date(t.date + 'T00:00:00');
+    return t.type === 'entree' && d.getFullYear() === m.year && d.getMonth() === m.month;
+  }).reduce((s, t) => s + t.amount, 0));
+  const sorties = months.map(m => transactions.filter(t => {
+    const d = new Date(t.date + 'T00:00:00');
+    return t.type === 'sortie' && d.getFullYear() === m.year && d.getMonth() === m.month;
+  }).reduce((s, t) => s + t.amount, 0));
+  return { labels: months.map(m => m.label), entrees, sorties };
+}
+
+function buildDonutData(filtered) {
+  const cats = {};
+  filtered.forEach(t => {
+    const c = t.cat || 'Non classé';
+    cats[c] = (cats[c] || 0) + t.amount;
+  });
+  const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  return { labels: sorted.map(e => e[0]), data: sorted.map(e => e[1]) };
+}
+
+const PALETTE = ['#22C55E','#3B82F6','#F59E0B','#A78BFA','#EC4899','#06B6D4'];
+
+function renderCharts(filtered) {
+  const ctxTrend = document.getElementById('chartTrend');
+  const ctxDonut = document.getElementById('chartDonut');
+  const trendData = buildTrendData();
+  const donutData = buildDonutData(filtered);
+
+  const baseOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'Fira Code' } } }
+  };
+
+  if (chartTrend) chartTrend.destroy();
+  chartTrend = new Chart(ctxTrend, {
+    type: 'bar',
+    data: {
+      labels: trendData.labels,
+      datasets: [
+        { label: 'Entrées', data: trendData.entrees, backgroundColor: 'rgba(34,197,94,.7)', borderRadius: 5, borderSkipped: false },
+        { label: 'Sorties', data: trendData.sorties, backgroundColor: 'rgba(239,68,68,.6)', borderRadius: 5, borderSkipped: false }
+      ]
+    },
+    options: {
+      ...baseOpts,
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#64748B', font: { family: 'Fira Sans', size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#64748B', font: { family: 'Fira Code', size: 11 }, callback: v => fmt(v) } }
+      },
+      plugins: { legend: { display: true, labels: { color: '#94A3B8', font: { family: 'Fira Sans', size: 11 }, boxWidth: 10, borderRadius: 3 } }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
+    }
+  });
+
+  if (chartDonut) chartDonut.destroy();
+  if (donutData.data.length === 0) {
+    chartDonut = null;
+    ctxDonut.getContext('2d').clearRect(0,0,ctxDonut.width,ctxDonut.height);
+    return;
+  }
+  chartDonut = new Chart(ctxDonut, {
+    type: 'doughnut',
+    data: {
+      labels: donutData.labels,
+      datasets: [{ data: donutData.data, backgroundColor: PALETTE, borderWidth: 2, borderColor: '#020617', hoverOffset: 6 }]
+    },
+    options: {
+      ...baseOpts,
+      cutout: '65%',
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#94A3B8', font: { family: 'Fira Sans', size: 11 }, boxWidth: 10, borderRadius: 3, padding: 8 } },
+        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + fmt(ctx.raw) } }
+      }
+    }
+  });
+}
+
+// ── Full Render ───────────────────────────────────────────────────────────────
+function render() {
+  syncCatFilter();
+  const filtered = getFilteredTx();
+  renderKPIs(filtered);
+  renderTable(filtered);
+  renderCharts(filtered);
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+const modal      = document.getElementById('modal');
+const txForm     = document.getElementById('txForm');
+const modalTitle = document.getElementById('modalTitle');
+
+function openModal(tx = null) {
+  txForm.reset();
+  document.getElementById('fDate').value = today();
+  if (tx) {
+    modalTitle.textContent = 'Modifier la transaction';
+    document.getElementById('editId').value = tx.id;
+    document.querySelector(`input[name="type"][value="${tx.type}"]`).checked = true;
+    document.getElementById('fMontant').value = tx.amount;
+    document.getElementById('fDate').value = tx.date;
+    document.getElementById('fDesc').value = tx.desc;
+    document.getElementById('fCat').value = tx.cat || '';
+    document.getElementById('fNote').value = tx.note || '';
+  } else {
+    modalTitle.textContent = 'Nouvelle transaction';
+    document.getElementById('editId').value = '';
+  }
+  modal.classList.add('open');
+  setTimeout(() => document.getElementById('fMontant').focus(), 100);
+}
+
+function closeModal() { modal.classList.remove('open'); }
+
+document.getElementById('addBtn').addEventListener('click', () => openModal());
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+txForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const amount = parseFloat(document.getElementById('fMontant').value);
+  const date   = document.getElementById('fDate').value;
+  const desc   = document.getElementById('fDesc').value.trim();
+  const type   = document.querySelector('input[name="type"]:checked').value;
+  const cat    = document.getElementById('fCat').value.trim();
+  const note   = document.getElementById('fNote').value.trim();
+  const editId = document.getElementById('editId').value;
+
+  if (!amount || amount <= 0 || !date || !desc) { toast('Remplis les champs obligatoires.', 'error'); return; }
+
+  if (editId) {
+    const idx = transactions.findIndex(t => t.id === editId);
+    if (idx >= 0) transactions[idx] = { ...transactions[idx], type, amount, date, desc, cat, note };
+    toast('Transaction mise à jour.', 'success');
+  } else {
+    transactions.push({ id: genId(), type, amount, date, desc, cat, note });
+    toast('Transaction ajoutée.', 'success');
+  }
+
+  saveData(transactions);
+  closeModal();
+  render();
+});
+
+// ── Edit / Delete ─────────────────────────────────────────────────────────────
+window.editTx = function(id) {
+  const tx = transactions.find(t => t.id === id);
+  if (tx) openModal(tx);
+};
+
+window.deleteTx = function(id) {
+  if (!confirm('Supprimer cette transaction ?')) return;
+  transactions = transactions.filter(t => t.id !== id);
+  saveData(transactions);
+  render();
+  toast('Transaction supprimée.', 'success');
+};
+
+// ── Period Pills ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPeriod = btn.dataset.period;
+    render();
+  });
+});
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+['filterType','filterCat','sortBy'].forEach(id => {
+  document.getElementById(id).addEventListener('change', render);
+});
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const filtered = getFilteredTx();
+  if (filtered.length === 0) { toast('Aucune donnée à exporter.', 'error'); return; }
+  const rows = [['Date','Description','Catégorie','Type','Montant (EUR)','Note']];
+  filtered.forEach(t => rows.push([t.date, t.desc, t.cat||'', t.type, t.type==='sortie'?-t.amount:t.amount, t.note||'']));
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'gestion-locale-' + today() + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Export CSV téléchargé.', 'success');
+});
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
