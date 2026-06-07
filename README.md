@@ -451,6 +451,18 @@ If not, use the Master rules exclusively.
 Now, generate the code...
 ```
 
+## Companion Tools
+
+### claude-mem — Persistent Memory for Claude Code
+
+[claude-mem](https://github.com/thedotmack/claude-mem) stores session observations and makes them available in future sessions. Paired with UI UX Pro Max, it preserves generated design systems, style decisions, and anti-pattern notes across restarts — so Claude never forgets your project's design direction.
+
+```bash
+npx claude-mem install
+```
+
+See [docs/claude-mem-integration.md](docs/claude-mem-integration.md) for the recommended setup and workflow.
+
 ## Architecture & Contributing
 
 ### For Users
