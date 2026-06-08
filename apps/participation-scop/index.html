@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calcul de Participation SCOP</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #181b24;
+      --surface-2: #20242f;
+      --border: #2a2f3c;
+      --text: #e8eaf0;
+      --text-muted: #9aa1b0;
+      --primary: #4f7cff;
+      --primary-soft: rgba(79, 124, 255, 0.12);
+      --success: #2dd4a8;
+      --success-soft: rgba(45, 212, 168, 0.12);
+      --warning: #f5a623;
+      --radius: 14px;
+      --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 80% -10%, rgba(79,124,255,0.10), transparent),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding: 32px 20px 80px;
+    }
+
+    .container { max-width: 1040px; margin: 0 auto; }
+
+    /* Header */
+    header { margin-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--primary), #7a5cff);
+      display: grid; place-items: center;
+      font-weight: 800; font-size: 18px; color: #fff;
+      box-shadow: 0 6px 16px rgba(79,124,255,0.4);
+    }
+    h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+    .subtitle { color: var(--text-muted); font-size: 14px; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card + .card { margin-top: 22px; }
+    .card-head {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title { font-size: 15px; font-weight: 600; }
+    .card-body { padding: 22px; }
+
+    /* Config grid */
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+    }
+    .field label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 7px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .input-wrap { position: relative; }
+    .input-wrap .suffix {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: 14px; pointer-events: none;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 11px 14px;
+      font-size: 15px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+    .hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+    /* Table */
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    thead th {
+      text-align: left; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--text-muted);
+      padding: 0 16px 12px;
+    }
+    th.num, td.num { text-align: right; }
+    tbody td {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 15px;
+      vertical-align: middle;
+    }
+    tbody tr:hover { background: rgba(255,255,255,0.015); }
+    .emp-name {
+      background: transparent; border: 1px solid transparent;
+      border-radius: 8px; color: var(--text); padding: 8px 10px;
+      width: 100%; font-size: 15px;
+    }
+    .emp-name:focus { border-color: var(--border); background: var(--surface-2); }
+    .emp-base {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); padding: 8px 10px;
+      width: 130px; text-align: right; font-size: 15px;
+    }
+    .emp-base:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+    .pill {
+      display: inline-block; padding: 4px 10px; border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+    }
+    .pill-interest { background: var(--success-soft); color: var(--success); }
+    .total-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .num { font-variant-numeric: tabular-nums; }
+
+    .row-del {
+      background: transparent; border: none; cursor: pointer;
+      color: var(--text-muted); font-size: 18px; line-height: 1;
+      width: 30px; height: 30px; border-radius: 8px;
+      transition: background .15s, color .15s;
+    }
+    .row-del:hover { background: rgba(255,80,80,0.12); color: #ff6b6b; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: none; cursor: pointer; font-size: 14px; font-weight: 600;
+      padding: 10px 16px; border-radius: 10px;
+      transition: transform .08s, filter .15s, background .15s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-ghost {
+      background: var(--surface-2); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--primary); }
+
+    /* Summary */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .stat {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .stat.highlight {
+      background: linear-gradient(135deg, rgba(79,124,255,0.18), rgba(122,92,255,0.12));
+      border-color: rgba(79,124,255,0.4);
+    }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .stat-value { font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums; }
+    .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    footer { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 36px; }
+    footer a { color: var(--primary); text-decoration: none; }
+
+    @media (max-width: 560px) {
+      body { padding: 20px 12px 60px; }
+      .stat-value { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">€</div>
+        <div>
+          <h1>Participation SCOP</h1>
+          <div class="subtitle">Calcul de la participation et des intérêts par salarié</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Configuration -->
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">⚙️ Paramètres de calcul</span>
+      </div>
+      <div class="card-body">
+        <div class="config-grid">
+          <div class="field">
+            <label for="baseAmount">Montant de base / salarié</label>
+            <div class="input-wrap">
+              <input type="number" id="baseAmount" value="1000" min="0" step="50" />
+              <span class="suffix">€</span>
+            </div>
+            <div class="hint">Appliqué par défaut à chaque nouveau salarié</div>
+          </div>
+          <div class="field">
+            <label for="rate">Taux d'intérêt</label>
+            <div class="input-wrap">
+              <input type="number" id="rate" value="3" min="0" step="0.1" />
+              <span class="suffix">%</span>
+            </div>
+            <div class="hint">Calculé automatiquement sur le montant de base</div>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn btn-ghost" id="applyBase" style="width:100%; justify-content:center;">
+              ↺ Réappliquer le montant à tous
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Salariés -->
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">👥 Salariés</span>
+        <button class="btn btn-primary" id="addEmp">+ Ajouter un salarié</button>
+      </div>
+      <div class="card-body">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:34%">Salarié</th>
+                <th class="num">Montant de base</th>
+                <th class="num">Intérêts (<span id="rateHead">3</span> %)</th>
+                <th class="num">Total à percevoir</th>
+                <th style="width:40px"></th>
+              </tr>
+            </thead>
+            <tbody id="empBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Résumé -->
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">📊 Récapitulatif</span>
+        <span class="subtitle" id="empCount">0 salarié</span>
+      </div>
+      <div class="card-body">
+        <div class="summary-grid">
+          <div class="stat">
+            <div class="stat-label">Total montants de base</div>
+            <div class="stat-value" id="sumBase">0 €</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Total intérêts</div>
+            <div class="stat-value" id="sumInterest">0 €</div>
+            <div class="stat-sub" id="rateSub">au taux de 3 %</div>
+          </div>
+          <div class="stat highlight">
+            <div class="stat-label">Participation totale</div>
+            <div class="stat-value" id="sumTotal">0 €</div>
+            <div class="stat-sub">base + intérêts</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Données sauvegardées localement dans votre navigateur · Participation SCOP
+    </footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "scop-participation-v1";
+
+    const els = {
+      baseAmount: document.getElementById("baseAmount"),
+      rate: document.getElementById("rate"),
+      rateHead: document.getElementById("rateHead"),
+      rateSub: document.getElementById("rateSub"),
+      empBody: document.getElementById("empBody"),
+      empCount: document.getElementById("empCount"),
+      sumBase: document.getElementById("sumBase"),
+      sumInterest: document.getElementById("sumInterest"),
+      sumTotal: document.getElementById("sumTotal"),
+      addEmp: document.getElementById("addEmp"),
+      applyBase: document.getElementById("applyBase"),
+    };
+
+    // State
+    let state = {
+      baseAmount: 1000,
+      rate: 3,
+      employees: [],
+    };
+
+    const eur = new Intl.NumberFormat("fr-FR", {
+      style: "currency", currency: "EUR", maximumFractionDigits: 2,
+    });
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) state = { ...state, ...JSON.parse(raw) };
+      } catch (e) { /* ignore */ }
+      if (!state.employees.length) {
+        state.employees = [
+          { id: uid(), name: "Salarié 1", base: state.baseAmount },
+          { id: uid(), name: "Salarié 2", base: state.baseAmount },
+        ];
+      }
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 9);
+    }
+
+    function render() {
+      els.baseAmount.value = state.baseAmount;
+      els.rate.value = state.rate;
+      els.rateHead.textContent = formatNum(state.rate);
+      els.rateSub.textContent = "au taux de " + formatNum(state.rate) + " %";
+
+      els.empBody.innerHTML = "";
+      let totalBase = 0, totalInterest = 0, totalAll = 0;
+
+      state.employees.forEach((emp) => {
+        const base = Number(emp.base) || 0;
+        const interest = base * (Number(state.rate) || 0) / 100;
+        const total = base + interest;
+        totalBase += base;
+        totalInterest += interest;
+        totalAll += total;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <input class="emp-name" type="text" value="${escapeHtml(emp.name)}"
+                   data-id="${emp.id}" data-field="name" placeholder="Nom du salarié" />
+          </td>
+          <td class="num">
+            <input class="emp-base" type="number" min="0" step="50"
+                   value="${base}" data-id="${emp.id}" data-field="base" />
+          </td>
+          <td class="num"><span class="pill pill-interest">${eur.format(interest)}</span></td>
+          <td class="num total-cell">${eur.format(total)}</td>
+          <td><button class="row-del" data-del="${emp.id}" title="Supprimer">×</button></td>
+        `;
+        els.empBody.appendChild(tr);
+      });
+
+      els.sumBase.textContent = eur.format(totalBase);
+      els.sumInterest.textContent = eur.format(totalInterest);
+      els.sumTotal.textContent = eur.format(totalAll);
+      const n = state.employees.length;
+      els.empCount.textContent = n + (n > 1 ? " salariés" : " salarié");
+
+      save();
+    }
+
+    function formatNum(n) {
+      return Number(n).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+      ));
+    }
+
+    // Events
+    els.baseAmount.addEventListener("input", () => {
+      state.baseAmount = Number(els.baseAmount.value) || 0;
+      save();
+    });
+
+    els.rate.addEventListener("input", () => {
+      state.rate = Number(els.rate.value) || 0;
+      render();
+    });
+
+    els.addEmp.addEventListener("click", () => {
+      state.employees.push({
+        id: uid(),
+        name: "Salarié " + (state.employees.length + 1),
+        base: state.baseAmount,
+      });
+      render();
+    });
+
+    els.applyBase.addEventListener("click", () => {
+      state.employees.forEach((e) => (e.base = state.baseAmount));
+      render();
+    });
+
+    els.empBody.addEventListener("input", (e) => {
+      const t = e.target;
+      const id = t.dataset.id;
+      if (!id) return;
+      const emp = state.employees.find((x) => x.id === id);
+      if (!emp) return;
+      if (t.dataset.field === "name") {
+        emp.name = t.value;
+        save();
+      } else if (t.dataset.field === "base") {
+        emp.base = Number(t.value) || 0;
+        // re-render only totals (avoid losing focus): update relevant cells
+        recalc();
+      }
+    });
+
+    els.empBody.addEventListener("click", (e) => {
+      const id = e.target.dataset.del;
+      if (!id) return;
+      state.employees = state.employees.filter((x) => x.id !== id);
+      render();
+    });
+
+    // Lightweight recalc that doesn't rebuild inputs (keeps focus while typing base)
+    function recalc() {
+      let totalBase = 0, totalInterest = 0, totalAll = 0;
+      const rows = els.empBody.querySelectorAll("tr");
+      state.employees.forEach((emp, i) => {
+        const base = Number(emp.base) || 0;
+        const interest = base * (Number(state.rate) || 0) / 100;
+        const total = base + interest;
+        totalBase += base; totalInterest += interest; totalAll += total;
+        const row = rows[i];
+        if (row) {
+          row.children[2].querySelector(".pill").textContent = eur.format(interest);
+          row.children[3].textContent = eur.format(total);
+        }
+      });
+      els.sumBase.textContent = eur.format(totalBase);
+      els.sumInterest.textContent = eur.format(totalInterest);
+      els.sumTotal.textContent = eur.format(totalAll);
+      save();
+    }
+
+    // Init
+    load();
+    render();
+  </script>
+</body>
+</html>
