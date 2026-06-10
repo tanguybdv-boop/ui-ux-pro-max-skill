@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planning Hebdomadaire</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design Tokens ─────────────────────────────────────────── */
+    :root {
+      --bg:          #0a0f1e;
+      --surface:     rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.07);
+      --glass:       rgba(255,255,255,0.06);
+      --glass-border:rgba(255,255,255,0.10);
+      --primary:     #2563EB;
+      --primary-light:#3B82F6;
+      --accent:      #059669;
+      --accent-light:#10B981;
+      --danger:      #DC2626;
+      --text:        #F1F5F9;
+      --text-muted:  #94A3B8;
+      --text-dim:    #475569;
+      --border:      rgba(255,255,255,0.08);
+      --shadow:      0 8px 32px rgba(0,0,0,0.4);
+      --shadow-sm:   0 2px 8px rgba(0,0,0,0.3);
+      --radius:      14px;
+      --radius-sm:   8px;
+      --radius-lg:   20px;
+      --blur:        blur(20px);
+      --transition:  0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    [data-theme="light"] {
+      --bg:          #EFF4FF;
+      --surface:     rgba(255,255,255,0.7);
+      --surface-hover: rgba(255,255,255,0.9);
+      --glass:       rgba(255,255,255,0.55);
+      --glass-border:rgba(37,99,235,0.12);
+      --text:        #0F172A;
+      --text-muted:  #475569;
+      --text-dim:    #94A3B8;
+      --border:      rgba(37,99,235,0.10);
+      --shadow:      0 8px 32px rgba(37,99,235,0.10);
+      --shadow-sm:   0 2px 8px rgba(37,99,235,0.08);
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* ── Background Orbs ───────────────────────────────────────── */
+    .bg-orbs {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18;
+    }
+    .orb-1 { width: 600px; height: 600px; background: #2563EB; top: -200px; left: -100px; }
+    .orb-2 { width: 500px; height: 500px; background: #059669; bottom: -150px; right: -100px; }
+    .orb-3 { width: 350px; height: 350px; background: #7C3AED; top: 40%; left: 50%; transform: translateX(-50%); }
+    [data-theme="light"] .orb { opacity: 0.09; }
+
+    /* ── Layout ────────────────────────────────────────────────── */
+    .app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 24px 20px; }
+
+    /* ── Header ────────────────────────────────────────────────── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 28px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: grid; place-items: center;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.4);
+    }
+    .logo-icon svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .header-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .week-nav { display: flex; align-items: center; gap: 8px; }
+    .week-label {
+      font-size: 15px; font-weight: 600; min-width: 200px; text-align: center;
+      color: var(--text);
+    }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--radius-sm); border: none;
+      font-family: inherit; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all var(--transition); white-space: nowrap;
+    }
+    .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-icon {
+      width: 36px; height: 36px; padding: 0; border-radius: var(--radius-sm);
+      background: var(--surface); border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+    }
+    .btn-icon:hover { background: var(--surface-hover); color: var(--text); }
+    .btn-primary {
+      background: var(--primary); color: #fff;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+    }
+    .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,0.45); }
+    .btn-glass {
+      background: var(--glass); border: 1px solid var(--glass-border);
+      color: var(--text-muted); backdrop-filter: var(--blur);
+    }
+    .btn-glass:hover { background: var(--surface-hover); color: var(--text); }
+    .btn-glass.active { color: var(--primary-light); border-color: rgba(59,130,246,0.3); background: rgba(37,99,235,0.1); }
+
+    /* ── Stats Bar ──────────────────────────────────────────────── */
+    .stats-bar {
+      display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .stat-card {
+      flex: 1; min-width: 130px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      backdrop-filter: var(--blur);
+      border-radius: var(--radius); padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .stat-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .stat-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .stat-icon.blue  { background: rgba(37,99,235,0.15); color: var(--primary-light); }
+    .stat-icon.green { background: rgba(5,150,105,0.15); color: var(--accent-light); }
+    .stat-icon.amber { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .stat-icon.purple{ background: rgba(124,58,237,0.15); color: #A78BFA; }
+    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+    .stat-value { font-size: 22px; font-weight: 700; line-height: 1; }
+
+    /* ── Grid ───────────────────────────────────────────────────── */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 56px repeat(7, 1fr);
+      gap: 0;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      backdrop-filter: var(--blur);
+      box-shadow: var(--shadow);
+    }
+
+    /* Day headers */
+    .grid-corner {
+      background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 0;
+    }
+    .day-header {
+      padding: 12px 8px; text-align: center;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      user-select: none;
+    }
+    .day-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+    .day-num-wrap { margin-top: 4px; }
+    .day-num {
+      display: inline-flex; width: 32px; height: 32px;
+      align-items: center; justify-content: center;
+      border-radius: 50%; font-size: 16px; font-weight: 700;
+    }
+    .day-num.today {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.5);
+    }
+
+    /* Time slots */
+    .time-label {
+      padding: 0 8px; text-align: right;
+      font-size: 11px; color: var(--text-dim); font-weight: 500;
+      height: 56px; display: flex; align-items: flex-start; padding-top: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .time-slot {
+      height: 56px; border-left: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      transition: background var(--transition);
+    }
+    .time-slot:hover { background: var(--surface-hover); }
+    .time-slot.drag-over { background: rgba(37,99,235,0.12); border: 1px dashed rgba(59,130,246,0.5); }
+
+    /* ── Tasks ──────────────────────────────────────────────────── */
+    .task {
+      position: absolute; left: 3px; right: 3px;
+      border-radius: 7px; padding: 5px 8px;
+      font-size: 12px; font-weight: 500; line-height: 1.3;
+      cursor: grab; user-select: none;
+      transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+      overflow: hidden;
+      z-index: 2;
+    }
+    .task:hover { transform: scale(1.02); z-index: 10; }
+    .task:active { cursor: grabbing; }
+    .task.dragging { opacity: 0.4; transform: scale(0.97); }
+    .task.ghost {
+      opacity: 0.7; transform: scale(1.03) rotate(1deg);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+      pointer-events: none; z-index: 1000;
+    }
+    .task-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .task-time { font-size: 10px; opacity: 0.75; margin-top: 1px; }
+    .task-delete {
+      position: absolute; top: 4px; right: 4px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: rgba(0,0,0,0.3); border: none;
+      color: rgba(255,255,255,0.8); font-size: 11px; line-height: 1;
+      cursor: pointer; display: none; align-items: center; justify-content: center;
+      transition: background var(--transition);
+    }
+    .task:hover .task-delete { display: flex; }
+    .task-delete:hover { background: var(--danger); }
+
+    /* Task color variants */
+    .task-blue   { background: linear-gradient(135deg,#1D4ED8,#2563EB); color:#fff; }
+    .task-green  { background: linear-gradient(135deg,#047857,#059669); color:#fff; }
+    .task-purple { background: linear-gradient(135deg,#6D28D9,#7C3AED); color:#fff; }
+    .task-amber  { background: linear-gradient(135deg,#B45309,#D97706); color:#fff; }
+    .task-rose   { background: linear-gradient(135deg,#BE123C,#E11D48); color:#fff; }
+    .task-sky    { background: linear-gradient(135deg,#0369A1,#0284C7); color:#fff; }
+
+    /* ── Modal ──────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #111827;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg); padding: 28px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+      animation: modal-in 0.22s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    [data-theme="light"] .modal { background: #fff; }
+    @keyframes modal-in {
+      from { opacity: 0; transform: scale(0.92) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
+      background: var(--surface); border: 1px solid var(--glass-border);
+      color: var(--text); font-family: inherit; font-size: 14px;
+      transition: border-color var(--transition);
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+    .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-swatch {
+      width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+      border: 2px solid transparent; transition: all var(--transition);
+    }
+    .color-swatch.selected { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 0 2px var(--primary); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-actions .btn { flex: 1; justify-content: center; padding: 10px; font-size: 14px; }
+    .btn-cancel { background: var(--surface); border: 1px solid var(--glass-border); color: var(--text-muted); }
+    .btn-cancel:hover { color: var(--text); background: var(--surface-hover); }
+
+    /* ── Today indicator line ───────────────────────────────────── */
+    .now-line {
+      position: absolute; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--danger), transparent);
+      pointer-events: none; z-index: 5;
+    }
+    .now-dot {
+      position: absolute; left: -5px; top: -4px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--danger);
+    }
+
+    /* ── Sidebar panel ──────────────────────────────────────────── */
+    .sidebar {
+      position: fixed; right: 0; top: 0; bottom: 0; width: 300px;
+      background: var(--glass); border-left: 1px solid var(--glass-border);
+      backdrop-filter: var(--blur);
+      transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      z-index: 50; padding: 24px; overflow-y: auto;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .task-bank { display: flex; flex-direction: column; gap: 8px; }
+    .bank-item {
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 500; cursor: grab;
+      user-select: none; color: #fff;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .bank-item:hover { transform: translateX(-3px); box-shadow: 4px 4px 12px rgba(0,0,0,0.3); }
+
+    /* ── Scrollable time area ───────────────────────────────────── */
+    .calendar-scroll { overflow-y: auto; max-height: calc(100dvh - 240px); }
+    .calendar-scroll::-webkit-scrollbar { width: 6px; }
+    .calendar-scroll::-webkit-scrollbar-track { background: transparent; }
+    .calendar-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Toast ──────────────────────────────────────────────────── */
+    .toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+    .toast {
+      background: #1E293B; border: 1px solid var(--glass-border); color: var(--text);
+      padding: 10px 18px; border-radius: 40px; font-size: 13px; font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      animation: toast-in 0.25s ease; pointer-events: none;
+    }
+    @keyframes toast-in { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes toast-out { to { opacity:0; transform: translateY(10px); } }
+    [data-theme="light"] .toast { background: #fff; }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .calendar-grid { grid-template-columns: 44px repeat(7, 1fr); font-size: 11px; }
+      .stat-card { min-width: 100px; }
+      .week-label { min-width: 130px; font-size: 13px; }
+      .stats-bar { gap: 8px; }
+    }
+    @media (max-width: 500px) {
+      .stats-bar { display: none; }
+      .sidebar { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="app">
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      Weekplan
+    </div>
+    <div class="header-controls">
+      <div class="week-nav">
+        <button class="btn btn-icon" id="prevWeek" aria-label="Semaine précédente">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="week-label" id="weekLabel"></span>
+        <button class="btn btn-icon" id="nextWeek" aria-label="Semaine suivante">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <button class="btn btn-glass" id="todayBtn">Aujourd'hui</button>
+      <button class="btn btn-glass" id="toggleSidebar" aria-label="Templates">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Templates
+      </button>
+      <button class="btn btn-primary" id="addTaskBtn">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tâche
+      </button>
+      <button class="btn btn-icon" id="themeToggle" aria-label="Thème">
+        <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-icon blue"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <div><div class="stat-label">Total</div><div class="stat-value" id="statTotal">0</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div><div class="stat-label">Terminées</div><div class="stat-value" id="statDone">0</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div><div class="stat-label">En cours</div><div class="stat-value" id="statPending">0</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div><div class="stat-label">Heures planifiées</div><div class="stat-value" id="statHours">0h</div></div>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="calendar-grid" id="calendarHeader">
+    <!-- JS fills headers -->
+  </div>
+  <div class="calendar-scroll">
+    <div class="calendar-grid" id="calendarBody" style="border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);">
+      <!-- JS fills time slots -->
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-title">
+    Templates
+    <button class="btn btn-icon" id="closeSidebar" style="width:28px;height:28px;font-size:18px;" aria-label="Fermer">✕</button>
+  </div>
+  <div class="task-bank" id="taskBank"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Nouvelle tâche</div>
+    <div class="form-group">
+      <label class="form-label" for="taskTitle">Titre *</label>
+      <input class="form-input" id="taskTitle" type="text" placeholder="Ex: Réunion équipe" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="taskDay">Jour</label>
+      <select class="form-input" id="taskDay"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="taskHour">Heure</label>
+      <select class="form-input" id="taskHour"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="taskDuration">Durée (blocs de 30 min)</label>
+      <select class="form-input" id="taskDuration">
+        <option value="1">30 min</option>
+        <option value="2" selected>1h</option>
+        <option value="3">1h30</option>
+        <option value="4">2h</option>
+        <option value="6">3h</option>
+        <option value="8">4h</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Couleur</label>
+      <div class="color-picker" id="colorPicker"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="cancelModal">Annuler</button>
+      <button class="btn btn-primary" id="saveTask">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+<script>
+/* ── State ──────────────────────────────────────────────────────── */
+const COLORS = ['task-blue','task-green','task-purple','task-amber','task-rose','task-sky'];
+const COLOR_HEX = {
+  'task-blue':'#2563EB','task-green':'#059669','task-purple':'#7C3AED',
+  'task-amber':'#D97706','task-rose':'#E11D48','task-sky':'#0284C7'
+};
+const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const HOURS = Array.from({length:24},(_,i)=>i); // 0..23
+const HALF_HOURS = [];
+for(let h=0;h<24;h++){HALF_HOURS.push(`${String(h).padStart(2,'0')}:00`);HALF_HOURS.push(`${String(h).padStart(2,'0')}:30`);}
+
+let weekOffset = 0;
+let tasks = JSON.parse(localStorage.getItem('weekplan_tasks') || '[]');
+let dragData = null;
+let ghostEl = null;
+let editingId = null;
+let selectedColor = COLORS[0];
+let pendingSlot = null; // {dayIndex, slotIndex}
+
+const TEMPLATES = [
+  {title:'Stand-up',color:'task-blue',duration:1},
+  {title:'Focus work',color:'task-purple',duration:4},
+  {title:'Déjeuner',color:'task-green',duration:2},
+  {title:'Review',color:'task-amber',duration:2},
+  {title:'1:1',color:'task-sky',duration:2},
+  {title:'Retrospective',color:'task-rose',duration:3},
+  {title:'Deep work',color:'task-purple',duration:6},
+  {title:'Emails',color:'task-amber',duration:1},
+];
+
+/* ── Week helpers ───────────────────────────────────────────────── */
+function getMonday(offset=0){
+  const d=new Date();
+  const day=d.getDay(); // 0=Sun
+  const diff=d.getDate()-(day===0?6:day-1)+offset*7;
+  const m=new Date(d);m.setDate(diff);m.setHours(0,0,0,0);
+  return m;
+}
+function getWeekDays(offset=0){
+  const mon=getMonday(offset);
+  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+}
+function fmtDate(d){return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
+function isToday(d){const t=new Date();return d.getDate()===t.getDate()&&d.getMonth()===t.getMonth()&&d.getFullYear()===t.getFullYear();}
+function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+/* ── Render ─────────────────────────────────────────────────────── */
+function render(){
+  const days=getWeekDays(weekOffset);
+  renderHeader(days);
+  renderBody(days);
+  updateStats();
+}
+
+function renderHeader(days){
+  const el=document.getElementById('calendarHeader');
+  el.innerHTML='';
+  // corner
+  const corner=document.createElement('div');corner.className='grid-corner';el.appendChild(corner);
+  days.forEach(d=>{
+    const h=document.createElement('div');h.className='day-header';
+    h.innerHTML=`<div class="day-name">${DAYS_FR[d.getDay()]}</div><div class="day-num-wrap"><span class="day-num${isToday(d)?' today':''}">${d.getDate()}</span></div>`;
+    el.appendChild(h);
+  });
+  // week label
+  const mon=days[0],sun=days[6];
+  document.getElementById('weekLabel').textContent=`${fmtDate(mon)} – ${fmtDate(sun)} ${sun.getFullYear()}`;
+}
+
+function renderBody(days){
+  const el=document.getElementById('calendarBody');
+  el.innerHTML='';
+  const now=new Date();
+  const todayIdx=days.findIndex(d=>isToday(d));
+
+  HALF_HOURS.forEach((label,slotIdx)=>{
+    // time label (every full hour)
+    const tl=document.createElement('div');tl.className='time-label';
+    if(slotIdx%2===0) tl.textContent=label;
+    el.appendChild(tl);
+
+    days.forEach((day,dayIdx)=>{
+      const slot=document.createElement('div');
+      slot.className='time-slot';
+      slot.dataset.day=dayIdx;
+      slot.dataset.slot=slotIdx;
+      slot.dataset.date=dateKey(day);
+
+      // Drop handlers
+      slot.addEventListener('dragover',e=>{e.preventDefault();slot.classList.add('drag-over');});
+      slot.addEventListener('dragleave',()=>slot.classList.remove('drag-over'));
+      slot.addEventListener('drop',e=>{
+        e.preventDefault();slot.classList.remove('drag-over');
+        if(dragData===null)return;
+        const t=tasks.find(t=>t.id===dragData);
+        if(!t)return;
+        t.dayIndex=dayIdx;t.slotIndex=slotIdx;t.date=dateKey(day);
+        save();render();showToast('Tâche déplacée');
+      });
+
+      // Click to create
+      slot.addEventListener('click',e=>{
+        if(e.target.closest('.task'))return;
+        pendingSlot={dayIndex:dayIdx,slotIndex:slotIdx,date:dateKey(day)};
+        openModal();
+        document.getElementById('taskDay').value=dayIdx;
+        document.getElementById('taskHour').value=slotIdx;
+      });
+
+      // Now-line
+      if(dayIdx===todayIdx){
+        const pct=((now.getHours()*60+now.getMinutes())/(24*60))*100;
+        const nowLineSlot=Math.floor((now.getHours()*2)+(now.getMinutes()>=30?1:0));
+        if(slotIdx===nowLineSlot){
+          const nl=document.createElement('div');nl.className='now-line';
+          const nd=document.createElement('div');nd.className='now-dot';nl.appendChild(nd);
+          const minPct=(now.getMinutes()%30)/30*100;
+          nl.style.top=minPct+'%';
+          slot.appendChild(nl);
+        }
+      }
+
+      el.appendChild(slot);
+    });
+  });
+
+  // Render tasks
+  tasks.forEach(t=>{
+    const dayIdx=getDayIndexForDate(days,t.date,t.dayIndex);
+    if(dayIdx<0||dayIdx>6)return;
+    const slotEl=el.querySelector(`[data-day="${dayIdx}"][data-slot="${t.slotIndex}"]`);
+    if(!slotEl)return;
+    slotEl.style.position='relative';
+
+    const taskEl=document.createElement('div');
+    taskEl.className=`task ${t.color}`;
+    taskEl.draggable=true;
+    taskEl.style.top='3px';
+    taskEl.style.height=`${t.duration*56-6}px`;
+
+    const h=Math.floor(t.slotIndex/2);const m=t.slotIndex%2===0?'00':'30';
+    taskEl.innerHTML=`<div class="task-title">${esc(t.title)}</div><div class="task-time">${String(h).padStart(2,'0')}:${m}</div><button class="task-delete" data-id="${t.id}" aria-label="Supprimer">✕</button>`;
+
+    taskEl.addEventListener('dragstart',()=>{dragData=t.id;taskEl.classList.add('dragging');});
+    taskEl.addEventListener('dragend',()=>{dragData=null;taskEl.classList.remove('dragging');});
+    taskEl.addEventListener('dblclick',()=>openEditModal(t.id));
+
+    taskEl.querySelector('.task-delete').addEventListener('click',e=>{
+      e.stopPropagation();
+      if(confirm(`Supprimer "${t.title}" ?`)){tasks=tasks.filter(x=>x.id!==t.id);save();render();showToast('Tâche supprimée');}
+    });
+
+    slotEl.appendChild(taskEl);
+  });
+}
+
+function getDayIndexForDate(days,dateStr,fallback){
+  if(dateStr){
+    const idx=days.findIndex(d=>dateKey(d)===dateStr);
+    return idx>=0?idx:-1;
+  }
+  return fallback??-1;
+}
+
+/* ── Modal ──────────────────────────────────────────────────────── */
+function buildModalOptions(days){
+  const daySelect=document.getElementById('taskDay');
+  daySelect.innerHTML='';
+  days.forEach((d,i)=>{
+    const o=document.createElement('option');o.value=i;o.textContent=`${DAYS_FR[d.getDay()]} ${d.getDate()}`;
+    daySelect.appendChild(o);
+  });
+  const hourSelect=document.getElementById('taskHour');
+  hourSelect.innerHTML='';
+  HALF_HOURS.forEach((h,i)=>{
+    const o=document.createElement('option');o.value=i;o.textContent=h;
+    hourSelect.appendChild(o);
+  });
+  // Color picker
+  const cp=document.getElementById('colorPicker');cp.innerHTML='';
+  COLORS.forEach(c=>{
+    const sw=document.createElement('div');sw.className=`color-swatch ${c}${c===selectedColor?' selected':''}`;
+    sw.style.background=COLOR_HEX[c];
+    sw.dataset.color=c;
+    sw.addEventListener('click',()=>{
+      selectedColor=c;
+      cp.querySelectorAll('.color-swatch').forEach(s=>s.classList.toggle('selected',s.dataset.color===c));
+    });
+    cp.appendChild(sw);
+  });
+}
+
+function openModal(){
+  editingId=null;
+  document.getElementById('modalTitle').textContent='Nouvelle tâche';
+  document.getElementById('taskTitle').value='';
+  document.getElementById('saveTask').textContent='Enregistrer';
+  const days=getWeekDays(weekOffset);
+  buildModalOptions(days);
+  if(pendingSlot){
+    document.getElementById('taskDay').value=pendingSlot.dayIndex;
+    document.getElementById('taskHour').value=pendingSlot.slotIndex;
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('taskTitle').focus();
+}
+
+function openEditModal(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  editingId=id;
+  document.getElementById('modalTitle').textContent='Modifier la tâche';
+  document.getElementById('taskTitle').value=t.title;
+  document.getElementById('saveTask').textContent='Enregistrer';
+  selectedColor=t.color;
+  const days=getWeekDays(weekOffset);
+  buildModalOptions(days);
+  const dIdx=getDayIndexForDate(days,t.date,t.dayIndex);
+  if(dIdx>=0)document.getElementById('taskDay').value=dIdx;
+  document.getElementById('taskHour').value=t.slotIndex;
+  document.getElementById('taskDuration').value=t.duration;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('taskTitle').focus();
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  pendingSlot=null;editingId=null;
+}
+
+document.getElementById('cancelModal').addEventListener('click',closeModal);
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+document.getElementById('saveTask').addEventListener('click',()=>{
+  const title=document.getElementById('taskTitle').value.trim();
+  if(!title){document.getElementById('taskTitle').focus();return;}
+  const dayIdx=parseInt(document.getElementById('taskDay').value);
+  const slotIdx=parseInt(document.getElementById('taskHour').value);
+  const duration=parseInt(document.getElementById('taskDuration').value);
+  const days=getWeekDays(weekOffset);
+
+  if(editingId){
+    const t=tasks.find(x=>x.id===editingId);
+    if(t){t.title=title;t.dayIndex=dayIdx;t.slotIndex=slotIdx;t.duration=duration;t.color=selectedColor;t.date=dateKey(days[dayIdx]);}
+    showToast('Tâche modifiée');
+  } else {
+    tasks.push({id:uid(),title,dayIndex:dayIdx,slotIndex:slotIdx,duration,color:selectedColor,date:dateKey(days[dayIdx])});
+    showToast('Tâche ajoutée');
+  }
+  save();closeModal();render();
+});
+
+document.getElementById('taskTitle').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('saveTask').click();});
+
+/* ── Navigation ─────────────────────────────────────────────────── */
+document.getElementById('prevWeek').addEventListener('click',()=>{weekOffset--;render();});
+document.getElementById('nextWeek').addEventListener('click',()=>{weekOffset++;render();});
+document.getElementById('todayBtn').addEventListener('click',()=>{weekOffset=0;render();});
+document.getElementById('addTaskBtn').addEventListener('click',()=>{pendingSlot=null;openModal();});
+
+/* ── Theme ──────────────────────────────────────────────────────── */
+const themeIcon=document.getElementById('themeIcon');
+function setTheme(t){
+  document.documentElement.dataset.theme=t;localStorage.setItem('weekplan_theme',t);
+  themeIcon.innerHTML=t==='dark'
+    ?'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+    :'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+}
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+});
+setTheme(localStorage.getItem('weekplan_theme')||'dark');
+
+/* ── Sidebar ────────────────────────────────────────────────────── */
+document.getElementById('toggleSidebar').addEventListener('click',()=>{document.getElementById('sidebar').classList.toggle('open');});
+document.getElementById('closeSidebar').addEventListener('click',()=>{document.getElementById('sidebar').classList.remove('open');});
+
+function buildTaskBank(){
+  const bank=document.getElementById('taskBank');bank.innerHTML='';
+  TEMPLATES.forEach(t=>{
+    const item=document.createElement('div');
+    item.className=`bank-item ${t.color}`;item.textContent=t.title;
+    item.style.background=COLOR_HEX[t.color];
+    item.draggable=true;
+    item.addEventListener('dragstart',e=>{
+      dragData='__bank__';
+      window._bankDraft={...t};
+    });
+    item.addEventListener('click',()=>{
+      pendingSlot=null;selectedColor=t.color;openModal();
+      document.getElementById('taskTitle').value=t.title;
+      document.getElementById('taskDuration').value=t.duration;
+      document.getElementById('sidebar').classList.remove('open');
+    });
+    bank.appendChild(item);
+  });
+}
+
+// Override drop to handle bank items
+document.addEventListener('dragover',e=>{
+  if(dragData==='__bank__')e.preventDefault();
+});
+
+/* Override slot drops for bank items */
+document.getElementById('calendarBody').addEventListener('drop',e=>{
+  if(dragData!=='__bank__')return;
+  const slot=e.target.closest('.time-slot');
+  if(!slot)return;
+  e.preventDefault();e.stopPropagation();
+  const t=window._bankDraft;
+  const dayIdx=parseInt(slot.dataset.day);
+  const slotIdx=parseInt(slot.dataset.slot);
+  const days=getWeekDays(weekOffset);
+  tasks.push({id:uid(),title:t.title,dayIndex:dayIdx,slotIndex:slotIdx,duration:t.duration,color:t.color,date:dateKey(days[dayIdx])});
+  dragData=null;window._bankDraft=null;
+  save();render();showToast('Tâche ajoutée depuis le template');
+});
+
+/* ── Stats ──────────────────────────────────────────────────────── */
+function updateStats(){
+  const days=getWeekDays(weekOffset);
+  const weekDates=new Set(days.map(d=>dateKey(d)));
+  const weekTasks=tasks.filter(t=>weekDates.has(t.date)||(t.date==null&&t.dayIndex>=0&&t.dayIndex<=6));
+  document.getElementById('statTotal').textContent=weekTasks.length;
+  document.getElementById('statDone').textContent=weekTasks.filter(t=>t.done).length;
+  document.getElementById('statPending').textContent=weekTasks.filter(t=>!t.done).length;
+  const hours=(weekTasks.reduce((s,t)=>s+(t.duration||2),0)*0.5).toFixed(1);
+  document.getElementById('statHours').textContent=hours+'h';
+}
+
+/* ── Utils ──────────────────────────────────────────────────────── */
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function save(){localStorage.setItem('weekplan_tasks',JSON.stringify(tasks));}
+
+function showToast(msg){
+  const tc=document.getElementById('toastContainer');
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  tc.appendChild(t);
+  setTimeout(()=>{t.style.animation='toast-out 0.25s ease forwards';setTimeout(()=>t.remove(),260);},2200);
+}
+
+/* ── Keyboard shortcuts ─────────────────────────────────────────── */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeModal();
+  if(e.key==='n'&&!e.target.matches('input,select,textarea')){pendingSlot=null;openModal();}
+  if(e.key==='ArrowLeft'&&!e.target.matches('input,select,textarea')){weekOffset--;render();}
+  if(e.key==='ArrowRight'&&!e.target.matches('input,select,textarea')){weekOffset++;render();}
+});
+
+/* ── Scroll to business hours ───────────────────────────────────── */
+function scrollToBusiness(){
+  const scroll=document.querySelector('.calendar-scroll');
+  if(!scroll)return;
+  const slotH=56;const startSlot=8*2; // 8:00
+  scroll.scrollTop=startSlot*slotH-10;
+}
+
+/* ── Init ───────────────────────────────────────────────────────── */
+buildTaskBank();
+render();
+scrollToBusiness();
+
+// Auto-update now-line every minute
+setInterval(()=>render(),60000);
+</script>
+</body>
+</html>
