@@ -1,0 +1,112 @@
+backend:
+  name: git-gateway
+  branch: claude/site-web-5l34gj
+
+media_folder: "images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "content"
+    label: "Contenu du site"
+    files:
+      - file: "content.json"
+        label: "Site"
+        name: "site"
+        fields:
+          - label: "Informations générales"
+            name: "site"
+            widget: object
+            fields:
+              - { label: "Nom de la société", name: "name", widget: string }
+              - { label: "Lettre du logo (si pas de logo image)", name: "logoLetter", widget: string }
+              - { label: "Logo (image, optionnel)", name: "logoImage", widget: image, required: false }
+              - { label: "Accroche courte", name: "tagline", widget: string }
+
+          - label: "Menu de navigation"
+            name: "nav"
+            widget: list
+            fields:
+              - { label: "Texte du lien", name: "label", widget: string }
+              - { label: "Lien (#ancre ou URL)", name: "href", widget: string }
+
+          - label: "Section d'accueil (Hero)"
+            name: "hero"
+            widget: object
+            fields:
+              - { label: "Badge (au-dessus du titre)", name: "badge", widget: string, required: false }
+              - { label: "Titre principal", name: "title", widget: string }
+              - { label: "Fin du titre (affichée en couleur)", name: "titleHighlight", widget: string }
+              - { label: "Sous-titre", name: "subtitle", widget: text }
+              - { label: "Photo (optionnel)", name: "image", widget: image, required: false }
+              - { label: "Texte bouton principal", name: "ctaPrimaryText", widget: string }
+              - { label: "Lien bouton principal", name: "ctaPrimaryHref", widget: string }
+              - { label: "Texte bouton secondaire", name: "ctaSecondaryText", widget: string }
+              - { label: "Lien bouton secondaire", name: "ctaSecondaryHref", widget: string }
+
+          - label: "Section À propos"
+            name: "about"
+            widget: object
+            fields:
+              - { label: "Titre", name: "title", widget: string }
+              - { label: "Texte", name: "text", widget: text }
+              - { label: "Photo (optionnel)", name: "image", widget: image, required: false }
+              - label: "Chiffres clés"
+                name: "stats"
+                widget: list
+                fields:
+                  - { label: "Chiffre", name: "number", widget: string }
+                  - { label: "Légende", name: "label", widget: string }
+
+          - { label: "Titre section Services", name: "servicesTitle", widget: string }
+          - { label: "Sous-titre section Services", name: "servicesSubtitle", widget: string }
+          - label: "Services"
+            name: "services"
+            widget: list
+            fields:
+              - { label: "Icône (emoji)", name: "icon", widget: string }
+              - { label: "Titre du service", name: "title", widget: string }
+              - { label: "Description", name: "description", widget: text }
+
+          - label: "Galerie photos"
+            name: "gallery"
+            widget: object
+            fields:
+              - { label: "Titre de la section", name: "title", widget: string }
+              - label: "Photos"
+                name: "images"
+                widget: list
+                required: false
+                fields:
+                  - { label: "Photo", name: "src", widget: image }
+                  - { label: "Légende (optionnel)", name: "alt", widget: string, required: false }
+
+          - { label: "Titre section Avis clients", name: "testimonialsTitle", widget: string }
+          - label: "Avis clients"
+            name: "testimonials"
+            widget: list
+            fields:
+              - { label: "Témoignage", name: "text", widget: text }
+              - { label: "Nom du client", name: "author", widget: string }
+              - { label: "Fonction / entreprise", name: "role", widget: string }
+
+          - label: "Section Contact"
+            name: "contact"
+            widget: object
+            fields:
+              - { label: "Titre", name: "title", widget: string }
+              - { label: "Sous-titre", name: "subtitle", widget: text }
+              - { label: "Email", name: "email", widget: string }
+              - { label: "Téléphone", name: "phone", widget: string }
+              - { label: "Adresse", name: "address", widget: string }
+
+          - label: "Pied de page"
+            name: "footer"
+            widget: object
+            fields:
+              - { label: "Texte (copyright)", name: "text", widget: string }
+              - label: "Réseaux sociaux"
+                name: "social"
+                widget: list
+                fields:
+                  - { label: "Nom du réseau", name: "label", widget: string }
+                  - { label: "Lien (laisser vide pour masquer)", name: "href", widget: string, required: false }

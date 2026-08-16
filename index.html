@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Site Vitrine</title>
-<meta name="description" content="Site vitrine — à personnaliser dans content.js">
+<title>Manufacture Textile des Vosges</title>
+<meta name="description" content="Savoir-faire textile vosgien depuis des générations.">
+<meta property="og:title" content="Manufacture Textile des Vosges">
+<meta property="og:description" content="Savoir-faire textile vosgien depuis des générations.">
+<meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -34,6 +37,7 @@
   html { scroll-behavior: smooth; }
   body { font-family: 'Open Sans', sans-serif; }
   h1, h2, h3, .font-heading { font-family: 'Poppins', sans-serif; }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body class="bg-bg text-fg antialiased">
@@ -42,7 +46,7 @@
   <header class="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-b border-border">
     <nav class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
       <a href="#top" class="flex items-center gap-2 font-heading font-bold text-lg">
-        <span id="logo-letter" class="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center text-sm"></span>
+        <span id="logo-letter" class="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center text-sm overflow-hidden"></span>
         <span id="site-name"></span>
       </a>
       <div id="nav-links" class="hidden md:flex items-center gap-8 text-sm font-medium text-mutedfg"></div>
@@ -66,11 +70,15 @@
         <a id="hero-cta-secondary" class="w-full sm:w-auto border border-border hover:bg-muted text-fg font-semibold px-7 py-3.5 rounded-xl transition-colors"></a>
       </div>
     </div>
+    <div class="max-w-4xl mx-auto mt-16">
+      <img id="hero-image" hidden class="w-full rounded-2xl border border-border object-cover max-h-[420px]" alt="">
+    </div>
   </section>
 
   <!-- About -->
   <section id="about" class="py-24 px-6 bg-white border-y border-border">
     <div class="max-w-4xl mx-auto text-center">
+      <img id="about-image" hidden class="w-full max-w-md mx-auto rounded-2xl border border-border object-cover max-h-[320px] mb-12" alt="">
       <h2 id="about-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight mb-6"></h2>
       <p id="about-text" class="text-mutedfg text-lg max-w-2xl mx-auto mb-14"></p>
       <div id="about-stats" class="grid grid-cols-1 sm:grid-cols-3 gap-8"></div>
@@ -88,8 +96,16 @@
     </div>
   </section>
 
+  <!-- Gallery -->
+  <section id="gallery" hidden class="py-24 px-6 bg-white border-y border-border">
+    <div class="max-w-6xl mx-auto">
+      <h2 id="gallery-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16"></h2>
+      <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+    </div>
+  </section>
+
   <!-- Testimonials -->
-  <section id="testimonials" class="py-24 px-6 bg-white border-y border-border">
+  <section id="testimonials" class="py-24 px-6">
     <div class="max-w-5xl mx-auto">
       <h2 id="testimonials-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16"></h2>
       <div id="testimonials-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
@@ -97,20 +113,20 @@
   </section>
 
   <!-- Contact -->
-  <section id="contact" class="py-24 px-6">
+  <section id="contact" class="py-24 px-6 bg-white border-y border-border">
     <div class="max-w-2xl mx-auto text-center">
       <h2 id="contact-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight mb-4"></h2>
       <p id="contact-subtitle" class="text-mutedfg mb-10"></p>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-        <a id="contact-email" class="bg-white border border-border rounded-xl p-5 hover:bg-muted transition-colors">
+        <a id="contact-email" class="bg-bg border border-border rounded-xl p-5 hover:bg-muted transition-colors">
           <span class="block text-xs text-mutedfg mb-1">Email</span>
           <span class="font-semibold" data-value></span>
         </a>
-        <a id="contact-phone" class="bg-white border border-border rounded-xl p-5 hover:bg-muted transition-colors">
+        <a id="contact-phone" class="bg-bg border border-border rounded-xl p-5 hover:bg-muted transition-colors">
           <span class="block text-xs text-mutedfg mb-1">Téléphone</span>
           <span class="font-semibold" data-value></span>
         </a>
-        <div id="contact-address" class="bg-white border border-border rounded-xl p-5">
+        <div id="contact-address" class="bg-bg border border-border rounded-xl p-5">
           <span class="block text-xs text-mutedfg mb-1">Adresse</span>
           <span class="font-semibold" data-value></span>
         </div>
@@ -119,87 +135,136 @@
   </section>
 
   <!-- Footer -->
-  <footer class="border-t border-border py-10 px-6 bg-white">
+  <footer class="py-10 px-6 bg-white">
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
       <p class="text-sm text-mutedfg"><span id="footer-name"></span> — <span id="footer-year"></span> <span id="footer-text"></span></p>
       <div id="footer-social" class="flex items-center gap-5 text-sm text-mutedfg"></div>
     </div>
   </footer>
 
-  <script src="content.js"></script>
   <script>
-    const C = window.SITE_CONTENT;
+    fetch('content.json')
+      .then(res => res.json())
+      .then(render);
 
-    // Nav / Header
-    document.getElementById('logo-letter').textContent = C.site.logoLetter;
-    document.getElementById('site-name').textContent = C.site.name;
-    document.getElementById('nav-links').innerHTML = C.nav.map(
-      item => `<a href="${item.href}" class="hover:text-fg transition-colors">${item.label}</a>`
-    ).join('');
+    function render(C) {
+      // Nav / Header
+      document.title = C.site.name;
+      document.querySelector('meta[name="description"]').setAttribute('content', C.site.tagline);
+      document.querySelector('meta[property="og:title"]').setAttribute('content', C.site.name);
+      document.querySelector('meta[property="og:description"]').setAttribute('content', C.site.tagline);
 
-    // Hero
-    document.getElementById('hero-badge').innerHTML =
-      `<span class="w-1.5 h-1.5 rounded-full bg-accent"></span> ${C.hero.badge}`;
-    document.getElementById('hero-title').textContent = C.hero.title + ' ';
-    document.getElementById('hero-title-highlight').textContent = C.hero.titleHighlight;
-    document.getElementById('hero-subtitle').textContent = C.hero.subtitle;
-    const ctaPrimary = document.getElementById('hero-cta-primary');
-    ctaPrimary.textContent = C.hero.ctaPrimaryText;
-    ctaPrimary.href = C.hero.ctaPrimaryHref;
-    const ctaSecondary = document.getElementById('hero-cta-secondary');
-    ctaSecondary.textContent = C.hero.ctaSecondaryText;
-    ctaSecondary.href = C.hero.ctaSecondaryHref;
+      const logoEl = document.getElementById('logo-letter');
+      if (C.site.logoImage) {
+        logoEl.innerHTML = `<img src="${C.site.logoImage}" class="w-full h-full object-cover" alt="">`;
+      } else {
+        logoEl.textContent = C.site.logoLetter;
+      }
+      document.getElementById('site-name').textContent = C.site.name;
+      document.getElementById('nav-links').innerHTML = C.nav.map(
+        item => `<a href="${item.href}" class="hover:text-fg transition-colors">${item.label}</a>`
+      ).join('');
 
-    // About
-    document.getElementById('about-title').textContent = C.about.title;
-    document.getElementById('about-text').textContent = C.about.text;
-    document.getElementById('about-stats').innerHTML = C.about.stats.map(s => `
-      <div>
-        <p class="font-heading text-3xl font-bold text-accent">${s.number}</p>
-        <p class="text-sm text-mutedfg mt-1">${s.label}</p>
-      </div>
-    `).join('');
+      // Hero
+      document.getElementById('hero-badge').innerHTML =
+        `<span class="w-1.5 h-1.5 rounded-full bg-accent"></span> ${C.hero.badge}`;
+      document.getElementById('hero-title').textContent = C.hero.title + ' ';
+      document.getElementById('hero-title-highlight').textContent = C.hero.titleHighlight;
+      document.getElementById('hero-subtitle').textContent = C.hero.subtitle;
+      const ctaPrimary = document.getElementById('hero-cta-primary');
+      ctaPrimary.textContent = C.hero.ctaPrimaryText;
+      ctaPrimary.href = C.hero.ctaPrimaryHref;
+      const ctaSecondary = document.getElementById('hero-cta-secondary');
+      ctaSecondary.textContent = C.hero.ctaSecondaryText;
+      ctaSecondary.href = C.hero.ctaSecondaryHref;
+      showImageIfSet('hero-image', C.hero.image);
 
-    // Services
-    document.getElementById('services-subtitle').textContent = C.servicesSubtitle;
-    document.getElementById('services-title').textContent = C.servicesTitle;
-    document.getElementById('services-grid').innerHTML = C.services.map(s => `
-      <div class="bg-white border border-border rounded-2xl p-7 hover:shadow-lg transition-shadow">
-        <div class="w-11 h-11 rounded-xl bg-accent/10 text-accent flex items-center justify-center mb-5 text-xl">${s.icon}</div>
-        <h3 class="font-heading font-bold text-lg mb-2">${s.title}</h3>
-        <p class="text-sm text-mutedfg">${s.description}</p>
-      </div>
-    `).join('');
+      // About
+      document.getElementById('about-title').textContent = C.about.title;
+      document.getElementById('about-text').textContent = C.about.text;
+      showImageIfSet('about-image', C.about.image);
+      document.getElementById('about-stats').innerHTML = C.about.stats.map(s => `
+        <div>
+          <p class="font-heading text-3xl font-bold text-accent">${s.number}</p>
+          <p class="text-sm text-mutedfg mt-1">${s.label}</p>
+        </div>
+      `).join('');
 
-    // Testimonials
-    document.getElementById('testimonials-title').textContent = C.testimonialsTitle;
-    document.getElementById('testimonials-grid').innerHTML = C.testimonials.map(t => `
-      <div class="bg-bg border border-border rounded-2xl p-7">
-        <p class="text-fg mb-5">"${t.text}"</p>
-        <p class="font-semibold text-sm">${t.author}</p>
-        <p class="text-xs text-mutedfg">${t.role}</p>
-      </div>
-    `).join('');
+      // Services
+      document.getElementById('services-subtitle').textContent = C.servicesSubtitle;
+      document.getElementById('services-title').textContent = C.servicesTitle;
+      document.getElementById('services-grid').innerHTML = C.services.map(s => `
+        <div class="bg-white border border-border rounded-2xl p-7 hover:shadow-lg transition-shadow">
+          <div class="w-11 h-11 rounded-xl bg-accent/10 text-accent flex items-center justify-center mb-5 text-xl">${s.icon}</div>
+          <h3 class="font-heading font-bold text-lg mb-2">${s.title}</h3>
+          <p class="text-sm text-mutedfg">${s.description}</p>
+        </div>
+      `).join('');
 
-    // Contact
-    document.getElementById('contact-title').textContent = C.contact.title;
-    document.getElementById('contact-subtitle').textContent = C.contact.subtitle;
-    const emailEl = document.getElementById('contact-email');
-    emailEl.href = `mailto:${C.contact.email}`;
-    emailEl.querySelector('[data-value]').textContent = C.contact.email;
-    const phoneEl = document.getElementById('contact-phone');
-    phoneEl.href = `tel:${C.contact.phone.replace(/\s/g, '')}`;
-    phoneEl.querySelector('[data-value]').textContent = C.contact.phone;
-    document.getElementById('contact-address').querySelector('[data-value]').textContent = C.contact.address;
+      // Gallery (hidden unless at least one image)
+      if (C.gallery && C.gallery.images && C.gallery.images.length) {
+        document.getElementById('gallery').hidden = false;
+        document.getElementById('gallery-title').textContent = C.gallery.title;
+        document.getElementById('gallery-grid').innerHTML = C.gallery.images.map(img => `
+          <figure class="rounded-xl overflow-hidden border border-border">
+            <img src="${img.src}" alt="${img.alt || ''}" class="w-full h-48 object-cover">
+            ${img.alt ? `<figcaption class="text-xs text-mutedfg p-2">${img.alt}</figcaption>` : ''}
+          </figure>
+        `).join('');
+      }
 
-    // Footer
-    document.getElementById('footer-name').textContent = C.site.name;
-    document.getElementById('footer-year').textContent = new Date().getFullYear();
-    document.getElementById('footer-text').textContent = C.footer.text;
-    document.getElementById('footer-social').innerHTML = C.footer.social
-      .filter(s => s.href)
-      .map(s => `<a href="${s.href}" class="hover:text-fg transition-colors">${s.label}</a>`)
-      .join('');
+      // Testimonials
+      document.getElementById('testimonials-title').textContent = C.testimonialsTitle;
+      document.getElementById('testimonials-grid').innerHTML = C.testimonials.map(t => `
+        <div class="bg-white border border-border rounded-2xl p-7">
+          <p class="text-fg mb-5">"${t.text}"</p>
+          <p class="font-semibold text-sm">${t.author}</p>
+          <p class="text-xs text-mutedfg">${t.role}</p>
+        </div>
+      `).join('');
+
+      // Contact
+      document.getElementById('contact-title').textContent = C.contact.title;
+      document.getElementById('contact-subtitle').textContent = C.contact.subtitle;
+      const emailEl = document.getElementById('contact-email');
+      emailEl.href = `mailto:${C.contact.email}`;
+      emailEl.querySelector('[data-value]').textContent = C.contact.email;
+      const phoneEl = document.getElementById('contact-phone');
+      phoneEl.href = `tel:${C.contact.phone.replace(/\s/g, '')}`;
+      phoneEl.querySelector('[data-value]').textContent = C.contact.phone;
+      document.getElementById('contact-address').querySelector('[data-value]').textContent = C.contact.address;
+
+      // Footer
+      document.getElementById('footer-name').textContent = C.site.name;
+      document.getElementById('footer-year').textContent = new Date().getFullYear();
+      document.getElementById('footer-text').textContent = C.footer.text;
+      document.getElementById('footer-social').innerHTML = C.footer.social
+        .filter(s => s.href)
+        .map(s => `<a href="${s.href}" class="hover:text-fg transition-colors">${s.label}</a>`)
+        .join('');
+    }
+
+    function showImageIfSet(id, src) {
+      const el = document.getElementById(id);
+      if (src) {
+        el.src = src;
+        el.hidden = false;
+      }
+    }
+  </script>
+
+  <!-- Panneau d'administration (édition sans code) -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script>
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on('init', user => {
+        if (!user) {
+          window.netlifyIdentity.on('login', () => {
+            document.location.href = '/admin/';
+          });
+        }
+      });
+    }
   </script>
 
 </body>
