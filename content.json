@@ -1,0 +1,67 @@
+{
+  "site": {
+    "name": "Manufacture Textile des Vosges",
+    "logoLetter": "M",
+    "logoImage": "",
+    "tagline": "Savoir-faire textile vosgien depuis des générations"
+  },
+  "nav": [
+    { "label": "Services", "href": "#services" },
+    { "label": "À propos", "href": "#about" },
+    { "label": "Galerie", "href": "#gallery" },
+    { "label": "Avis clients", "href": "#testimonials" },
+    { "label": "Contact", "href": "#contact" }
+  ],
+  "hero": {
+    "badge": "Nouveau — précise ici une actualité si tu veux",
+    "title": "Le titre principal qui donne envie de rester",
+    "titleHighlight": "et qui donne envie d'agir",
+    "subtitle": "Une ou deux phrases qui expliquent simplement ce que tu proposes et à qui.",
+    "image": "",
+    "ctaPrimaryText": "Demander un devis",
+    "ctaPrimaryHref": "#contact",
+    "ctaSecondaryText": "En savoir plus",
+    "ctaSecondaryHref": "#about"
+  },
+  "about": {
+    "title": "Qui sommes-nous",
+    "text": "Présente ici ton activité, ton histoire, ce qui te différencie. Deux à quatre phrases suffisent pour rassurer le visiteur.",
+    "image": "",
+    "stats": [
+      { "number": "10+", "label": "années d'expérience" },
+      { "number": "200+", "label": "clients satisfaits" },
+      { "number": "100%", "label": "sur-mesure" }
+    ]
+  },
+  "servicesTitle": "Nos services",
+  "servicesSubtitle": "Ce que nous proposons",
+  "services": [
+    { "icon": "⚡", "title": "Nom du service 1", "description": "Décris ici en une phrase ce qu'apporte ce service au client." },
+    { "icon": "🎯", "title": "Nom du service 2", "description": "Décris ici en une phrase ce qu'apporte ce service au client." },
+    { "icon": "🤝", "title": "Nom du service 3", "description": "Décris ici en une phrase ce qu'apporte ce service au client." }
+  ],
+  "gallery": {
+    "title": "Galerie",
+    "images": []
+  },
+  "testimonialsTitle": "Ce que disent nos clients",
+  "testimonials": [
+    { "text": "Un exemple de témoignage client, à remplacer par un vrai retour d'expérience.", "author": "Prénom Nom", "role": "Fonction, Entreprise" },
+    { "text": "Un deuxième témoignage pour renforcer la confiance des visiteurs.", "author": "Prénom Nom", "role": "Fonction, Entreprise" }
+  ],
+  "contact": {
+    "title": "Parlons de votre projet",
+    "subtitle": "Une question, un projet ? Contactez-nous, réponse sous 24h.",
+    "email": "contact@manufacturetextiledesvosges.fr",
+    "phone": "+33 1 23 45 67 89",
+    "address": "Vosges, France"
+  },
+  "footer": {
+    "text": "Tous droits réservés.",
+    "social": [
+      { "label": "LinkedIn", "href": "" },
+      { "label": "Instagram", "href": "" },
+      { "label": "Facebook", "href": "" }
+    ]
+  }
+}
