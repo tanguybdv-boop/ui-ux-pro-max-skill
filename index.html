@@ -8,6 +8,8 @@
 <meta property="og:title" content="Manufacture Textile des Vosges">
 <meta property="og:description" content="Savoir-faire textile vosgien depuis des générations.">
 <meta property="og:type" content="website">
+<meta name="theme-color" content="#2563EB">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Ctext x='16' y='22' font-family='sans-serif' font-size='17' font-weight='700' text-anchor='middle' fill='white'%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -38,57 +40,110 @@
   body { font-family: 'Open Sans', sans-serif; }
   h1, h2, h3, .font-heading { font-family: 'Poppins', sans-serif; }
   [hidden] { display: none !important; }
+
+  :focus-visible { outline: 2px solid #2563EB; outline-offset: 3px; border-radius: 2px; }
+
+  header { box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04); transition: box-shadow .25s ease, background-color .25s ease; }
+  header.is-scrolled { box-shadow: 0 8px 24px -12px rgba(15, 23, 42, 0.18); }
+
+  .nav-link { position: relative; }
+  .nav-link::after {
+    content: ''; position: absolute; left: 0; right: 100%; bottom: -4px; height: 2px;
+    background: #2563EB; transition: right .25s ease;
+  }
+  .nav-link:hover::after, .nav-link.is-active::after { right: 0; }
+  .nav-link.is-active { color: #1E293B; }
+
+  #mobile-menu { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+  #mobile-menu.is-open { max-height: 320px; }
+
+  .hero-decor {
+    position: absolute; inset: 0; z-index: -1; overflow: hidden;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(37, 99, 235, 0.14), transparent 45%),
+      radial-gradient(circle at 85% 0%, rgba(37, 99, 235, 0.10), transparent 40%),
+      radial-gradient(circle at 1px 1px, rgba(30, 41, 59, 0.08) 1px, transparent 0);
+    background-size: auto, auto, 28px 28px;
+    mask-image: linear-gradient(to bottom, black, transparent);
+  }
+
+  .icon-badge {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(37, 99, 235, 0.04));
+    transition: transform .25s ease, background .25s ease;
+  }
+  .card-lift { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  .card-lift:hover { transform: translateY(-4px); border-color: rgba(37, 99, 235, 0.35); }
+  .card-lift:hover .icon-badge { transform: scale(1.08); }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .card-lift, .card-lift:hover, .icon-badge, .card-lift:hover .icon-badge { transition: none !important; transform: none !important; }
+  }
 </style>
 </head>
 <body class="bg-bg text-fg antialiased">
 
   <!-- Nav -->
-  <header class="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-b border-border">
+  <header id="site-header" class="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur">
     <nav class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
       <a href="#top" class="flex items-center gap-2 font-heading font-bold text-lg">
         <span id="logo-letter" class="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center text-sm overflow-hidden"></span>
         <span id="site-name"></span>
       </a>
       <div id="nav-links" class="hidden md:flex items-center gap-8 text-sm font-medium text-mutedfg"></div>
-      <a href="#contact" class="bg-accent hover:bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-        Contact
-      </a>
+      <div class="flex items-center gap-3">
+        <a href="#contact" class="bg-accent hover:bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+          Contact
+        </a>
+        <button id="mobile-menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu" class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-border text-fg">
+          <svg id="mobile-menu-icon-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          <svg id="mobile-menu-icon-close" hidden xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
     </nav>
+    <div id="mobile-menu" class="md:hidden border-t border-border bg-white">
+      <div id="mobile-nav-links" class="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-4 text-sm font-medium text-mutedfg"></div>
+    </div>
   </header>
 
   <!-- Hero -->
-  <section id="top" class="pt-40 pb-24 px-6">
-    <div class="max-w-3xl mx-auto text-center">
+  <section id="top" class="relative pt-40 pb-24 px-6">
+    <div class="hero-decor" aria-hidden="true"></div>
+    <div class="max-w-3xl mx-auto text-center reveal is-visible">
       <div id="hero-badge" class="inline-flex items-center gap-2 bg-muted rounded-full px-4 py-1.5 text-xs font-semibold text-accent mb-6"></div>
-      <h1 class="font-heading text-4xl sm:text-5xl font-bold tracking-tight leading-[1.15] mb-6">
+      <h1 class="font-heading text-5xl sm:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
         <span id="hero-title"></span>
         <span id="hero-title-highlight" class="text-accent"></span>
       </h1>
       <p id="hero-subtitle" class="text-lg text-mutedfg max-w-xl mx-auto mb-10"></p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a id="hero-cta-primary" class="w-full sm:w-auto bg-accent hover:bg-primary text-white font-semibold px-7 py-3.5 rounded-xl transition-colors"></a>
+        <a id="hero-cta-primary" class="w-full sm:w-auto bg-accent hover:bg-primary text-white font-semibold px-7 py-3.5 rounded-xl transition-colors shadow-lg shadow-accent/20"></a>
         <a id="hero-cta-secondary" class="w-full sm:w-auto border border-border hover:bg-muted text-fg font-semibold px-7 py-3.5 rounded-xl transition-colors"></a>
       </div>
     </div>
-    <div class="max-w-4xl mx-auto mt-16">
-      <img id="hero-image" hidden class="w-full rounded-2xl border border-border object-cover max-h-[420px]" alt="">
+    <div class="max-w-4xl mx-auto mt-16 reveal is-visible">
+      <img id="hero-image" hidden class="w-full rounded-2xl border border-border object-cover max-h-[420px] shadow-xl shadow-fg/5" alt="">
     </div>
   </section>
 
   <!-- About -->
   <section id="about" class="py-24 px-6 bg-white border-y border-border">
-    <div class="max-w-4xl mx-auto text-center">
-      <img id="about-image" hidden class="w-full max-w-md mx-auto rounded-2xl border border-border object-cover max-h-[320px] mb-12" alt="">
+    <div class="max-w-4xl mx-auto text-center reveal">
+      <img id="about-image" hidden class="w-full max-w-md mx-auto rounded-2xl border border-border object-cover max-h-[320px] mb-12 shadow-xl shadow-fg/5" alt="">
       <h2 id="about-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight mb-6"></h2>
       <p id="about-text" class="text-mutedfg text-lg max-w-2xl mx-auto mb-14"></p>
-      <div id="about-stats" class="grid grid-cols-1 sm:grid-cols-3 gap-8"></div>
+      <div id="about-stats" class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border gap-8 sm:gap-0"></div>
     </div>
   </section>
 
   <!-- Services -->
   <section id="services" class="py-24 px-6">
     <div class="max-w-6xl mx-auto">
-      <div class="text-center max-w-2xl mx-auto mb-16">
+      <div class="text-center max-w-2xl mx-auto mb-16 reveal">
         <p id="services-subtitle" class="text-sm font-semibold text-accent mb-3"></p>
         <h2 id="services-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight"></h2>
       </div>
@@ -99,7 +154,7 @@
   <!-- Gallery -->
   <section id="gallery" hidden class="py-24 px-6 bg-white border-y border-border">
     <div class="max-w-6xl mx-auto">
-      <h2 id="gallery-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16"></h2>
+      <h2 id="gallery-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16 reveal"></h2>
       <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
     </div>
   </section>
@@ -107,26 +162,29 @@
   <!-- Testimonials -->
   <section id="testimonials" class="py-24 px-6">
     <div class="max-w-5xl mx-auto">
-      <h2 id="testimonials-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16"></h2>
+      <h2 id="testimonials-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-center mb-16 reveal"></h2>
       <div id="testimonials-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </div>
   </section>
 
   <!-- Contact -->
   <section id="contact" class="py-24 px-6 bg-white border-y border-border">
-    <div class="max-w-2xl mx-auto text-center">
+    <div class="max-w-2xl mx-auto text-center reveal">
       <h2 id="contact-title" class="font-heading text-3xl sm:text-4xl font-bold tracking-tight mb-4"></h2>
       <p id="contact-subtitle" class="text-mutedfg mb-10"></p>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-        <a id="contact-email" class="bg-bg border border-border rounded-xl p-5 hover:bg-muted transition-colors">
+        <a id="contact-email" class="card-lift bg-bg border border-border rounded-xl p-5 text-left hover:bg-muted">
+          <svg class="w-5 h-5 text-accent mb-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
           <span class="block text-xs text-mutedfg mb-1">Email</span>
           <span class="font-semibold" data-value></span>
         </a>
-        <a id="contact-phone" class="bg-bg border border-border rounded-xl p-5 hover:bg-muted transition-colors">
+        <a id="contact-phone" class="card-lift bg-bg border border-border rounded-xl p-5 text-left hover:bg-muted">
+          <svg class="w-5 h-5 text-accent mb-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
           <span class="block text-xs text-mutedfg mb-1">Téléphone</span>
           <span class="font-semibold" data-value></span>
         </a>
-        <div id="contact-address" class="bg-bg border border-border rounded-xl p-5">
+        <div id="contact-address" class="bg-bg border border-border rounded-xl p-5 text-left">
+          <svg class="w-5 h-5 text-accent mb-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
           <span class="block text-xs text-mutedfg mb-1">Adresse</span>
           <span class="font-semibold" data-value></span>
         </div>
@@ -135,7 +193,7 @@
   </section>
 
   <!-- Footer -->
-  <footer class="py-10 px-6 bg-white">
+  <footer class="py-10 px-6 bg-white border-t border-border">
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
       <p class="text-sm text-mutedfg"><span id="footer-name"></span> — <span id="footer-year"></span> <span id="footer-text"></span></p>
       <div id="footer-social" class="flex items-center gap-5 text-sm text-mutedfg"></div>
@@ -162,6 +220,9 @@
       }
       document.getElementById('site-name').textContent = C.site.name;
       document.getElementById('nav-links').innerHTML = C.nav.map(
+        item => `<a href="${item.href}" class="nav-link hover:text-fg transition-colors">${item.label}</a>`
+      ).join('');
+      document.getElementById('mobile-nav-links').innerHTML = C.nav.map(
         item => `<a href="${item.href}" class="hover:text-fg transition-colors">${item.label}</a>`
       ).join('');
 
@@ -194,8 +255,8 @@
       document.getElementById('services-subtitle').textContent = C.servicesSubtitle;
       document.getElementById('services-title').textContent = C.servicesTitle;
       document.getElementById('services-grid').innerHTML = C.services.map(s => `
-        <div class="bg-white border border-border rounded-2xl p-7 hover:shadow-lg transition-shadow">
-          <div class="w-11 h-11 rounded-xl bg-accent/10 text-accent flex items-center justify-center mb-5 text-xl">${s.icon}</div>
+        <div class="reveal card-lift bg-white border border-border rounded-2xl p-7 hover:shadow-lg">
+          <div class="icon-badge w-11 h-11 rounded-xl text-accent flex items-center justify-center mb-5 text-xl">${s.icon}</div>
           <h3 class="font-heading font-bold text-lg mb-2">${s.title}</h3>
           <p class="text-sm text-mutedfg">${s.description}</p>
         </div>
@@ -206,7 +267,7 @@
         document.getElementById('gallery').hidden = false;
         document.getElementById('gallery-title').textContent = C.gallery.title;
         document.getElementById('gallery-grid').innerHTML = C.gallery.images.map(img => `
-          <figure class="rounded-xl overflow-hidden border border-border">
+          <figure class="reveal rounded-xl overflow-hidden border border-border">
             <img src="${img.src}" alt="${img.alt || ''}" class="w-full h-48 object-cover">
             ${img.alt ? `<figcaption class="text-xs text-mutedfg p-2">${img.alt}</figcaption>` : ''}
           </figure>
@@ -216,7 +277,7 @@
       // Testimonials
       document.getElementById('testimonials-title').textContent = C.testimonialsTitle;
       document.getElementById('testimonials-grid').innerHTML = C.testimonials.map(t => `
-        <div class="bg-white border border-border rounded-2xl p-7">
+        <div class="reveal card-lift bg-white border border-border rounded-2xl p-7">
           <p class="text-fg mb-5">"${t.text}"</p>
           <p class="font-semibold text-sm">${t.author}</p>
           <p class="text-xs text-mutedfg">${t.role}</p>
@@ -242,6 +303,9 @@
         .filter(s => s.href)
         .map(s => `<a href="${s.href}" class="hover:text-fg transition-colors">${s.label}</a>`)
         .join('');
+
+      initRevealObserver();
+      initActiveNavObserver();
     }
 
     function showImageIfSet(id, src) {
@@ -251,6 +315,64 @@
         el.hidden = false;
       }
     }
+
+    // Fade-up reveal for cards/sections as they enter the viewport
+    function initRevealObserver() {
+      const targets = document.querySelectorAll('.reveal:not(.is-visible)');
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      targets.forEach(el => observer.observe(el));
+    }
+
+    // Highlights the nav link matching the section currently in view
+    function initActiveNavObserver() {
+      const sections = [...document.querySelectorAll('section[id]')]
+        .filter(s => document.querySelector(`.nav-link[href="#${s.id}"]`));
+      if (!sections.length) return;
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const link = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+          if (!link) return;
+          if (entry.isIntersecting) {
+            document.querySelectorAll('.nav-link.is-active').forEach(a => a.classList.remove('is-active'));
+            link.classList.add('is-active');
+          }
+        });
+      }, { rootMargin: '-45% 0px -45% 0px' });
+      sections.forEach(s => observer.observe(s));
+    }
+
+    // Header shadow on scroll
+    const header = document.getElementById('site-header');
+    const toggleHeaderShadow = () => header.classList.toggle('is-scrolled', window.scrollY > 8);
+    toggleHeaderShadow();
+    window.addEventListener('scroll', toggleHeaderShadow, { passive: true });
+
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const iconOpen = document.getElementById('mobile-menu-icon-open');
+    const iconClose = document.getElementById('mobile-menu-icon-close');
+    menuBtn.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.toggle('is-open');
+      menuBtn.setAttribute('aria-expanded', String(isOpen));
+      iconOpen.hidden = isOpen;
+      iconClose.hidden = !isOpen;
+    });
+    mobileMenu.addEventListener('click', (e) => {
+      if (e.target.closest('a')) {
+        mobileMenu.classList.remove('is-open');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        iconOpen.hidden = false;
+        iconClose.hidden = true;
+      }
+    });
   </script>
 
   <!-- Panneau d'administration (édition sans code) -->
